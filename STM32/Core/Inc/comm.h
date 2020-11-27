@@ -3,8 +3,8 @@
 
 #include <inttypes.h>
 
-#define RECV_BUFFER 1024 * 16
-#define SEND_BUFFER 1024 * 16
+#define RECV_BUFFER_SIZE 1024 * 32
+#define SEND_BUFFER_SIZE 512
 
 #define COMMAND_PRG_STARTED 0
 #define COMMAND_CHR_STARTED 1
@@ -67,8 +67,8 @@ void comm_send(uint8_t* address, uint16_t length);
 void comm_proceed(uint8_t data);
 
 extern volatile uint8_t comm_recv_command;
-extern volatile unsigned int comm_recv_length;
-extern volatile uint8_t recv_buffer[RECV_BUFFER+16];
+extern volatile uint16_t comm_recv_length;
+extern volatile uint8_t recv_buffer[RECV_BUFFER_SIZE];
 extern volatile uint8_t comm_recv_done;
 
 #endif

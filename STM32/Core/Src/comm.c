@@ -2,19 +2,18 @@
 #include "crc.h"
 #include "usbd_cdc_if.h"
 
-static uint8_t comm_send_crc;
-static unsigned int comm_send_length;
-static unsigned int comm_send_pos;
+uint8_t send_buffer[SEND_BUFFER_SIZE];
+volatile uint16_t send_buffer_pos = 0;
+static uint8_t comm_send_crc;     // CRC of outgoing packet with header
+static uint16_t comm_send_length; // size of outgoing data
+static uint16_t comm_send_pos;    // how many data sent by app
 
-static int comm_recv_pos;
+volatile uint8_t recv_buffer[RECV_BUFFER_SIZE];
+static uint16_t comm_recv_pos; // how many bytes of packet received
 static uint8_t comm_recv_crc;
 static uint8_t comm_recv_error;
-
 volatile uint8_t comm_recv_command;
-volatile unsigned int comm_recv_length;
-volatile uint8_t recv_buffer[RECV_BUFFER + 16];
-volatile uint8_t send_buffer[SEND_BUFFER + 16];
-volatile uint16_t comm_out_pos = 0;
+volatile uint16_t comm_recv_length;
 volatile uint8_t comm_recv_done;
 
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
@@ -25,20 +24,34 @@ static void comm_flush(void)
   uint8_t res;
   do
   {
-    res = CDC_Transmit_FS((uint8_t*) send_buffer, comm_out_pos);
+    res = CDC_Transmit_FS((uint8_t*) send_buffer, send_buffer_pos);
   } while (res != USBD_OK);
+  send_buffer_pos = 0;
 }
 
 static void comm_send_and_calc(uint8_t data)
 {
   comm_send_crc = calc_crc8(comm_send_crc, data);
-  send_buffer[comm_out_pos++] = data;
+  send_buffer[send_buffer_pos++] = data;
+}
+
+void check_send_buffer()
+{
+  if (comm_send_pos >= comm_send_length)
+  {
+    send_buffer[send_buffer_pos++] = comm_send_crc;
+    comm_flush();
+  } else if (send_buffer_pos >= sizeof(send_buffer))
+  {
+    comm_flush();
+  }
 }
 
 void comm_start(uint8_t command, uint16_t length)
 {
+  printf("Sending command %02X, length %d\n", command, length);
   comm_send_crc = 0;
-  comm_out_pos = 0;
+  send_buffer_pos = 0;
   comm_send_pos = 0;
   comm_send_and_calc('F');
   comm_send_and_calc(command);
@@ -46,43 +59,38 @@ void comm_start(uint8_t command, uint16_t length)
   comm_send_and_calc((length >> 8) & 0xff);
   comm_send_length = length;
 
-  if (!comm_send_length)
-  {
-    send_buffer[comm_out_pos++] = comm_send_crc;
-    comm_flush();
-  }
+  check_send_buffer();
 }
 
 void comm_send_byte(uint8_t data)
 {
   comm_send_and_calc(data);
   comm_send_pos++;
-
-  if (comm_send_pos == comm_send_length)
-  {
-    send_buffer[comm_out_pos++] = comm_send_crc;
-    comm_flush();
-  }
+  check_send_buffer();
 }
 
 void comm_send(uint8_t *address, uint16_t length)
 {
+  while (length)
+  {
+    comm_send_byte(*address);
+    address++;
+    length--;
+  }
+  /*
   dma_done = 0;
-  HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel1, (uint32_t) address, (uint32_t) &send_buffer[comm_out_pos], length);
+  HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel1, (uint32_t) address, (uint32_t) &send_buffer[send_buffer_pos], length);
   while (!dma_done)
   {
   }
   comm_send_pos += length;
   while (length)
   {
-    comm_send_crc = calc_crc8(comm_send_crc, send_buffer[comm_out_pos++]);
+    comm_send_crc = calc_crc8(comm_send_crc, send_buffer[send_buffer_pos++]);
     length--;
   }
-  if (comm_send_pos >= comm_send_length)
-  {
-    send_buffer[comm_out_pos++] = comm_send_crc;
-    comm_flush();
-  }
+  check_send_buffer();
+  */
 }
 
 void comm_proceed(uint8_t data)
@@ -96,7 +104,7 @@ void comm_proceed(uint8_t data)
     comm_recv_done = 0;
   }
   comm_recv_crc= calc_crc8(comm_recv_crc, data);
-  unsigned int l = comm_recv_pos - 4;
+  uint16_t l = comm_recv_pos - 4;
   switch (comm_recv_pos)
   {
   case 0:
@@ -130,6 +138,7 @@ void comm_proceed(uint8_t data)
       if (!comm_recv_crc)
       {
         comm_recv_done = 1;
+        printf("Received command %02X, length %d\n", comm_recv_command, comm_recv_length);
       } else
       {
         comm_recv_error = 1;
