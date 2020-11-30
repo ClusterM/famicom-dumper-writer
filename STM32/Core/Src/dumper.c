@@ -6,37 +6,26 @@
 #include "led.h"
 
 volatile uint8_t dummy;
-volatile uint16_t page_mask = 0xFFC0;
+uint16_t flash_buffer_mask = 0xFFC0;
 
 static void delay_clock(uint32_t cycles)
 {
   if (cycles < 30000)
   {
+    // Accurate timer
     TIM4->CNT = 0;
     while (TIM4->CNT < cycles)
     {
     }
   } else
   {
+    // Not so accurate timer for large delays
     cycles /= 1000;
     TIM3->CNT = 0;
     while (TIM3->CNT < cycles)
     {
     }
   }
-}
-
-static uint8_t read_prg_once(uint16_t address)
-{
-  while (TIM2->CNT > 10)
-  {
-  }
-  while (TIM2->CNT < 10)
-  {
-  }
-  uint8_t result = PRG(address);
-  dummy = PRG(0);
-  return result;
 }
 
 void reset(void)
@@ -46,14 +35,23 @@ void reset(void)
   HAL_GPIO_WritePin(SHIFTERS_OE_GPIO_Port, SHIFTERS_OE_Pin, GPIO_PIN_RESET);
 }
 
+void set_flash_buffer_size(uint16_t value)
+{
+  // Set maximum number of bytes in multi-byte program
+  uint8_t bit_value = 0;
+  while (value > 1)
+  {
+    value >>= 1;
+    bit_value++;
+  }
+  flash_buffer_mask = 0xFFFF << bit_value;
+}
+
 void read_prg_send(uint16_t address, uint16_t length)
 {
   led_green();
   comm_start(COMMAND_PRG_READ_RESULT, length);
-  if (length == 1)
-    comm_send_byte(read_prg_once(address));
-  else
-    comm_send((uint8_t*) &PRG(address), length);
+  comm_send((uint8_t*) &PRG(address), length);
 }
 
 void read_prg_crc_send(uint16_t address, uint16_t length)
@@ -162,8 +160,8 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
     uint16_t a = address;
     uint16_t last_address;
     uint8_t last_data;
-    uint16_t address_base = a & page_mask;
-    while ((len > 0) && ((a & page_mask) == address_base))
+    uint16_t address_base = a & flash_buffer_mask;
+    while ((len > 0) && ((a & flash_buffer_mask) == address_base))
     {
       if (*d != 0xFF)
         count++;

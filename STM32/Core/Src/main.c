@@ -231,12 +231,10 @@ int main(void)
         get_mirroring();
         break;
 
-        /*
-         case COMMAND_BOOTLOADER:
-         cli();
-         MCUCSR = 0;
-         jump_to_bootloader();
-         */
+      case COMMAND_SET_FLASH_BUFFER_SIZE:
+        set_flash_buffer_size(recv_buffer[0] | ((uint16_t)recv_buffer[1] << 8));
+        comm_start(COMMAND_SET_VALUE_DONE, 0);
+        break;
       }
       led_off();
     }

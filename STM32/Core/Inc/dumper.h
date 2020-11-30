@@ -32,6 +32,7 @@
 #define IRQ_FIRED (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin))
 
 void reset(void);
+void set_flash_buffer_size(uint16_t value);
 void read_prg_send(uint16_t address, uint16_t len);
 void read_prg_crc_send(uint16_t address, uint16_t len);
 void write_prg(uint16_t address, uint16_t len, uint8_t *data);
