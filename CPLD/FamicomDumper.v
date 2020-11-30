@@ -11,6 +11,7 @@ module FamicomDumper # (
    input a13,
    input a15, 
    output nwait,
+   input reserved,
  
    output romsel,
    output cpu_rw,
@@ -22,7 +23,6 @@ module FamicomDumper # (
    output ppu_dir,
    output ppu_oe,
  
-   input coolboy_mode,
    output coolboy_oe,
    output coolboy_we,
  

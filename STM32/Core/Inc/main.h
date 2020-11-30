@@ -62,8 +62,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define M2_Pin GPIO_PIN_0
 #define M2_GPIO_Port GPIOA
-#define COOLBOY_MODE_Pin GPIO_PIN_1
-#define COOLBOY_MODE_GPIO_Port GPIOA
+#define RESERVED_Pin GPIO_PIN_1
+#define RESERVED_GPIO_Port GPIOA
 #define WS2812_Pin GPIO_PIN_2
 #define WS2812_GPIO_Port GPIOA
 #define CIRAM_CE_Pin GPIO_PIN_4

@@ -49,7 +49,6 @@ set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name VERILOG_FILE FamicomDumper.v
 set_global_assignment -name MAX7000_DEVICE_IO_STANDARD "3.3-V LVTTL"
 set_location_assignment PIN_75 -to a13
-set_location_assignment PIN_71 -to coolboy_mode
 set_location_assignment PIN_76 -to a15
 set_location_assignment PIN_83 -to nwait
 set_location_assignment PIN_84 -to noe
@@ -73,3 +72,4 @@ set_location_assignment PIN_32 -to led_prg_read
 set_location_assignment PIN_31 -to led_prg_write
 set_location_assignment PIN_30 -to led_chr_read
 set_location_assignment PIN_29 -to led_chr_write
+set_location_assignment PIN_71 -to reserved
