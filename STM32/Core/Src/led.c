@@ -140,6 +140,11 @@ void led_magenta()
   set_led_color(0x80, 0x00, 0x80);
 }
 
+void led_cyan()
+{
+  set_led_color(0x00, 0x80, 0x80);
+}
+
 void led_idle()
 {
   if (idle_timer_start + 5000 < HAL_GetTick())

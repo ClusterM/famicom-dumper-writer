@@ -49,7 +49,7 @@ void check_send_buffer()
 
 void comm_start(uint8_t command, uint16_t length)
 {
-  printf("Sending command %02X, length %d\n", command, length);
+  //printf("Sending command %02X, length %d\n", command, length);
   comm_send_crc = 0;
   send_buffer_pos = 0;
   comm_send_pos = 0;
@@ -138,7 +138,7 @@ void comm_proceed(uint8_t data)
       if (!comm_recv_crc)
       {
         comm_recv_done = 1;
-        printf("Received command %02X, length %d\n", comm_recv_command, comm_recv_length);
+        //printf("Received command %02X, length %d\n", comm_recv_command, comm_recv_length);
       } else
       {
         comm_recv_error = 1;

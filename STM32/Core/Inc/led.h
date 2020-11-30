@@ -8,6 +8,7 @@ void led_red();;
 void led_yellow();
 void led_blue();
 void led_magenta();
+void led_cyan();
 void led_idle();
 
 #endif

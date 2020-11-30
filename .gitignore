@@ -7,3 +7,5 @@ Release/
 incremental_db/
 db/
 output_files/
+*.launch
+~*~
