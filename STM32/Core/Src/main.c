@@ -238,8 +238,6 @@ int main(void)
          jump_to_bootloader();
          */
       }
-
-      printf("Command done\n");
       led_off();
     }
     /* USER CODE END WHILE */
