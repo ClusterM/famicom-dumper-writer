@@ -22,7 +22,7 @@ You can use it to:
 * Anything else that requires Famicom bus simulation
 
 
-##Schematic:
+## Schematic:
 
 ![Schematic](schematic/schematic.png)
 
