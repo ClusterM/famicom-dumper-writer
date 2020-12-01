@@ -7,5 +7,6 @@ Release/
 incremental_db/
 db/
 output_files/
+*.qws
 *.launch
 ~*~

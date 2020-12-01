@@ -86,9 +86,9 @@ int _write(int file, char *ptr, int len)
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
@@ -246,18 +246,18 @@ int main(void)
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = { 0 };
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = { 0 };
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = { 0 };
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
+  * in the RCC_OscInitTypeDef structure.
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV2;
@@ -270,8 +270,9 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -291,10 +292,10 @@ void SystemClock_Config(void)
 }
 
 /**
- * @brief TIM1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM1_Init(void)
 {
 
@@ -302,8 +303,8 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
-  TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM1_Init 1 */
 
@@ -337,10 +338,10 @@ static void MX_TIM1_Init(void)
 }
 
 /**
- * @brief TIM2 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM2_Init(void)
 {
 
@@ -348,9 +349,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
-  TIM_MasterConfigTypeDef sMasterConfig = { 0 };
-  TIM_OC_InitTypeDef sConfigOC = { 0 };
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
 
@@ -396,10 +397,10 @@ static void MX_TIM2_Init(void)
 }
 
 /**
- * @brief TIM3 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM3_Init(void)
 {
 
@@ -407,8 +408,8 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 0 */
 
-  TIM_SlaveConfigTypeDef sSlaveConfig = { 0 };
-  TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM3_Init 1 */
 
@@ -442,10 +443,10 @@ static void MX_TIM3_Init(void)
 }
 
 /**
- * @brief TIM4 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM4_Init(void)
 {
 
@@ -453,8 +454,8 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 0 */
 
-  TIM_SlaveConfigTypeDef sSlaveConfig = { 0 };
-  TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM4_Init 1 */
 
@@ -488,10 +489,10 @@ static void MX_TIM4_Init(void)
 }
 
 /**
- * @brief TIM5 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM5 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM5_Init(void)
 {
 
@@ -499,9 +500,9 @@ static void MX_TIM5_Init(void)
 
   /* USER CODE END TIM5_Init 0 */
 
-  TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
-  TIM_MasterConfigTypeDef sMasterConfig = { 0 };
-  TIM_OC_InitTypeDef sConfigOC = { 0 };
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM5_Init 1 */
 
@@ -547,10 +548,10 @@ static void MX_TIM5_Init(void)
 }
 
 /**
- * Enable DMA controller clock
- * Configure DMA for memory to memory transfers
- *   hdma_memtomem_dma1_channel1
- */
+  * Enable DMA controller clock
+  * Configure DMA for memory to memory transfers
+  *   hdma_memtomem_dma1_channel1
+  */
 static void MX_DMA_Init(void)
 {
 
@@ -569,7 +570,7 @@ static void MX_DMA_Init(void)
   hdma_memtomem_dma1_channel1.Init.Priority = DMA_PRIORITY_VERY_HIGH;
   if (HAL_DMA_Init(&hdma_memtomem_dma1_channel1) != HAL_OK)
   {
-    Error_Handler();
+    Error_Handler( );
   }
 
   /* DMA interrupt init */
@@ -583,13 +584,13 @@ static void MX_DMA_Init(void)
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = { 0 };
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOF_CLK_ENABLE();
@@ -619,7 +620,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CIRAM_CE_Pin CIRAM_A10_Pin */
-  GPIO_InitStruct.Pin = CIRAM_CE_Pin | CIRAM_A10_Pin;
+  GPIO_InitStruct.Pin = CIRAM_CE_Pin|CIRAM_A10_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
@@ -647,14 +648,14 @@ static void MX_FSMC_Init(void)
 
   /* USER CODE END FSMC_Init 0 */
 
-  FSMC_NORSRAM_TimingTypeDef Timing = { 0 };
+  FSMC_NORSRAM_TimingTypeDef Timing = {0};
 
   /* USER CODE BEGIN FSMC_Init 1 */
 
   /* USER CODE END FSMC_Init 1 */
 
   /** Perform the SRAM1 memory initialization sequence
-   */
+  */
   hsram1.Instance = FSMC_NORSRAM_DEVICE;
   hsram1.Extended = FSMC_NORSRAM_EXTENDED_DEVICE;
   /* hsram1.Init */
@@ -683,11 +684,11 @@ static void MX_FSMC_Init(void)
 
   if (HAL_SRAM_Init(&hsram1, &Timing, NULL) != HAL_OK)
   {
-    Error_Handler();
+    Error_Handler( );
   }
 
   /** Perform the SRAM2 memory initialization sequence
-   */
+  */
   hsram2.Instance = FSMC_NORSRAM_DEVICE;
   hsram2.Extended = FSMC_NORSRAM_EXTENDED_DEVICE;
   /* hsram2.Init */
@@ -716,11 +717,11 @@ static void MX_FSMC_Init(void)
 
   if (HAL_SRAM_Init(&hsram2, &Timing, NULL) != HAL_OK)
   {
-    Error_Handler();
+    Error_Handler( );
   }
 
   /** Disconnect NADV
-   */
+  */
 
   __HAL_AFIO_FSMCNADV_DISCONNECTED();
 
@@ -734,9 +735,9 @@ static void MX_FSMC_Init(void)
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
