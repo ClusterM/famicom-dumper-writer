@@ -3,7 +3,11 @@
 
 ## Overview
 
-This is simple dumper/writer for Famicom cartridges and Famicom Disc System cards.
+This is simple dumper/writer for Famicom cartridges and Famicom Disc System cards. This version is much faster compared to
+the [old one](https://github.com/ClusterM/famicom-dumper). It's using very accurate M2 cycle simulation and usinc FSMC
+(Flexible Static Memory Controller) to access PRG and CHR memory. FSMC is precisely synchronized with the M2 clock signal
+using CPLD chip. Also new version uses fast on-chip USB controller instead of slow FT232 USB-UART converter.
+
 
 ![Dumper](photos/dumper.jpg)
 
@@ -20,11 +24,16 @@ You can use it to:
 
 ##Schematic:
 
-![Schematic](scematic/scematic.png)
+![Schematic](schematic/schematic.png)
 
 Bill of Materials:
 
 ![BoM](schematic/bom.png)
+
+
+## Firmware
+
+You need to write two firmwares: to the STM32 chip using ST-Link programmer and the EPM1270 CPLD chip using USB Blaster programmer.
 
 
 ## Software
