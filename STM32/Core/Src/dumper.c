@@ -158,8 +158,8 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
     uint8_t count = 0;
     uint8_t *d = data;
     uint16_t a = address;
-    uint16_t last_address;
-    uint8_t last_data;
+    uint16_t last_address = 0;
+    uint8_t last_data = 0;
     uint16_t address_base = a & flash_buffer_mask;
     while ((len > 0) && ((a & flash_buffer_mask) == address_base))
     {

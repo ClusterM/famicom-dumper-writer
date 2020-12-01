@@ -21,9 +21,12 @@ extern volatile uint8_t dma_done;
 
 static void comm_flush(void)
 {
+  uint32_t start_time = HAL_GetTick();
   uint8_t res;
   do
   {
+    if (HAL_GetTick() >= start_time + SEND_TIMEOUT) // 5 seconds timeout
+      break;
     res = CDC_Transmit_FS((uint8_t*) send_buffer, send_buffer_pos);
   } while (res != USBD_OK);
   send_buffer_pos = 0;
