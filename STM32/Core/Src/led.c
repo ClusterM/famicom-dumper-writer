@@ -6,8 +6,8 @@ static uint8_t pwm_values[8 * 3 + 1];
 static uint32_t idle_timer_start = 0;
 static uint32_t last_led_update_time = 0;
 static double idle_hue = 240;
-static double idle_hue_speed = 0.01;
-static double idle_value = 0.5;
+static double idle_hue_speed = 0.05;
+static double idle_value = 0.25;
 
 typedef struct
 {
@@ -156,9 +156,9 @@ void led_idle()
     rgb r = hsv2rgb(h);
     set_led_color(r.r * 0xFF, r.g * 0xFF, r.b * 0xFF);
     idle_hue += idle_hue_speed;
-    if (idle_hue > 260 || idle_hue < 220)
+    if (idle_hue > 270 || idle_hue < 190)
       idle_hue_speed *= -1;
-    if (idle_value < 0.5)
+    if (idle_value < 0.25)
       idle_value += 0.0001;
   }
 }
