@@ -289,7 +289,7 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
     comm_start(COMMAND_FDS_READ_RESULT_BLOCK, length + 2);
   }
   // start transfer, enable IRQ
-  PRG(FDS_CONTROL) = PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
   for (b = 0; b < length; b++)
   {
     if (!transfer_fds_byte(&data, 0, end_of_head))
@@ -306,7 +306,7 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
   }
   if (!transfer_fds_byte((uint8_t*) &dummy, 0, end_of_head))
     return 0;
-  PRG(FDS_CONTROL) = PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
   if (!transfer_fds_byte((uint8_t*) &dummy, 0, end_of_head))
     return 0;
   status = PRG(FDS_DISK_STATUS);
@@ -363,7 +363,7 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
     comm_start(COMMAND_FDS_END_OF_HEAD, 0);
     return 0;
   }
-  PRG(FDS_CONTROL) = PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC;  // enable CRC control
+  PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC;  // enable CRC control
   delay_clock(FDS_WRITE_CRC_DELAY);
   start_time = HAL_GetTick();
   while (1)
@@ -451,7 +451,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     if (!read_fds_block_send(56, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BEFORE_FIRST_BLOCK))
       return;
   }
-  if (block_read_count)
+  if ((current_block >= block_read_start) && block_read_count)
     block_read_count--;
   current_block++;
 
@@ -471,7 +471,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
       if (!read_fds_block_send(2, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
         return;
     }
-    if (block_read_count)
+    if ((current_block >= block_read_start) && block_read_count)
       block_read_count--;
     current_block++;
   }
@@ -493,7 +493,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
       if (!read_fds_block_send(16, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, &file_size, FDS_READ_GAP_BETWEEN_BLOCKS))
         return;
     }
-    if (block_read_count)
+    if ((current_block >= block_read_start) && block_read_count)
       block_read_count--;
     current_block++;
 
@@ -513,7 +513,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
         if (!read_fds_block_send(file_size + 1, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
           return;
       }
-      if (block_read_count)
+      if ((current_block >= block_read_start) && block_read_count)
         block_read_count--;
       current_block++;
     }

@@ -159,6 +159,7 @@ int main(void)
         comm_send_byte(((RECV_BUFFER_SIZE - 4) >> 8) & 0xFF);
         break;
 
+      case COMMAND_COOLBOY_READ_REQUEST:
       case COMMAND_PRG_READ_REQUEST:
         address = recv_buffer[0] | ((uint16_t) recv_buffer[1] << 8);
         length = recv_buffer[2] | ((uint16_t) recv_buffer[3] << 8);
