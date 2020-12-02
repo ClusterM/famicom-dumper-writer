@@ -249,7 +249,7 @@ static uint8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
       return 0;
     }
@@ -269,7 +269,7 @@ static uint8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
       return 0;
     }
@@ -339,28 +339,20 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
   {
     if (end_of_head)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_END_OF_HEAD, 0);
       return 0;
     }
     if (!transfer_fds_byte(0, *data, &end_of_head))
-    {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
-      comm_start(COMMAND_FDS_TIMEOUT, 0);
       return 0;
-    }
     data++;
     length--;
   }
   if (!transfer_fds_byte(0, 0xFF, &end_of_head))
-  {
-    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
-    comm_start(COMMAND_FDS_TIMEOUT, 0);
     return 0;
-  }
   if (end_of_head)
   {
-    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
     comm_start(COMMAND_FDS_END_OF_HEAD, 0);
     return 0;
   }
@@ -375,7 +367,7 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
     // timeout 1 sec
     if (HAL_GetTick() - start_time >= 1000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
       return 0;
     }
@@ -398,7 +390,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
   led_magenta();
   PRG(FDS_IRQ_CONTROL) = 0x00; // disable timer IRQ
   PRG(FDS_MASTER_IO) = 0x01; // enable disk registers
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset
   uint8_t ram_adapter_connected = 1;
   PRG(FDS_EXT_WRITE) = 0x00; // Ext. connector
   PRG(0x0000) = 0xFF; // To prevent open bus read
@@ -418,17 +410,16 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     comm_start(COMMAND_FDS_DISK_NOT_INSERTED, 0);
     return;
   }
+  // battery test
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
-  delay_clock(268500); // ~268500 cycles
+  HAL_Delay(100);
   if ((PRG(FDS_EXT_READ) & 0x80) == 0)
   {
     // battery low
-    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
     comm_start(COMMAND_FDS_BATTERY_LOW, 0);
     return;
   }
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
   // waiting until drive is rewinded
   start_time = HAL_GetTick();
   do
@@ -436,7 +427,18 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     // timeout 15 secs
     if (HAL_GetTick() - start_time >= 15000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
+      comm_start(COMMAND_FDS_TIMEOUT, 0);
+      return;
+    }
+  } while (!(PRG(FDS_DRIVE_STATUS) & 2));
+  start_time = HAL_GetTick();
+  do
+  {
+    // timeout 15 secs
+    if (HAL_GetTick() - start_time >= 15000)
+    {
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
       return;
     }
@@ -528,7 +530,7 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     }
   }
 
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
 
   HAL_Delay(50);
   if (current_writing_block && !block_write_count && !block_read_count)
