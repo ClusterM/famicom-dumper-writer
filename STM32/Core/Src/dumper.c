@@ -256,6 +256,8 @@ static uint8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of
   }
   if (output)
     *output = PRG(FDS_DATA_READ);
+  else
+    dummy = PRG(FDS_DATA_READ);
   PRG(FDS_DATA_WRITE) = input; // clear interrupt
   uint8_t status = PRG(FDS_DISK_STATUS);
   if (end_of_head)
@@ -281,7 +283,6 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
   uint8_t status;
   uint32_t b;
 
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
   delay_clock(gap_delay);
   if (send)
   {
@@ -304,10 +305,10 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
     if (send)
       comm_send_byte(data);
   }
-  if (!transfer_fds_byte((uint8_t*) &dummy, 0, end_of_head))
+  if (!transfer_fds_byte(0, 0, end_of_head))
     return 0;
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
-  if (!transfer_fds_byte((uint8_t*) &dummy, 0, end_of_head))
+  if (!transfer_fds_byte(0, 0, end_of_head))
     return 0;
   status = PRG(FDS_DISK_STATUS);
   *crc_ok &= ((status >> 4) & 1) ^ 1;
@@ -317,6 +318,8 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
     comm_send_byte(*crc_ok); // CRC check result
     comm_send_byte(*end_of_head); // end of head meet?
   }
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
+
   led_cyan();
   return 1; // success
 }
@@ -326,8 +329,6 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
   uint8_t end_of_head = 0;
   uint32_t start_time;
   led_red();
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
-  dummy = PRG(FDS_DRIVE_STATUS); // check if disk is inserted
   PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON; // enable writing without transfer
   delay_clock(gap_delay);
   PRG(FDS_DATA_WRITE) = 0x00; // write $00
@@ -379,6 +380,8 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
       return 0;
     }
   }
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
+
   led_cyan();
   return 1;
 }
