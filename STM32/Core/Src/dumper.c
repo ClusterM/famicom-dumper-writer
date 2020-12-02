@@ -418,9 +418,15 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     comm_start(COMMAND_FDS_DISK_NOT_INSERTED, 0);
     return;
   }
-  delay_clock(916500); // ~916500 cycles
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
   delay_clock(268500); // ~268500 cycles
+  if ((PRG(FDS_EXT_READ) & 0x80) == 0)
+  {
+    // battery low
+    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset, stop
+    comm_start(COMMAND_FDS_BATTERY_LOW, 0);
+    return;
+  }
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_RESET; // reset
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
   // waiting until drive is rewinded
