@@ -88,11 +88,11 @@ static void update_led()
   while (last_led_update_time + 2 > HAL_GetTick())
   {
   }
-  last_led_update_time = HAL_GetTick();
-  htim5.Instance->CR1 &= ~TIM_CR1_CEN;
-  htim5.Instance->CCR3 = 0;
+  HAL_TIMEx_PWMN_Stop_DMA(&htim5, TIM_CHANNEL_3);
+  htim5.Instance->CCR3 = 1;
   htim5.Instance->CNT = 0;
   HAL_TIM_PWM_Start_DMA(&htim5, TIM_CHANNEL_3, (void*) pwm_values, sizeof(pwm_values));
+  last_led_update_time = HAL_GetTick();
 }
 
 void set_led_color(uint8_t r, uint8_t g, uint8_t b)
@@ -105,6 +105,7 @@ void set_led_color(uint8_t r, uint8_t g, uint8_t b)
     pwm_values[led * 8 * 3 + 8 + i] = ((g >> (7 - i)) & 1) ? 67 : 22;
   for (i = 0; i < 8; i++)
     pwm_values[led * 8 * 3 + 16 + i] = ((b >> (7 - i)) & 1) ? 67 : 22;
+  pwm_values[sizeof(pwm_values) - 1] = 0;
   update_led();
 }
 
