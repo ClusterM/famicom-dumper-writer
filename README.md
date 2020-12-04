@@ -7,6 +7,10 @@ This is a simple dumper/writer for Famicom cartridges and Famicom Disc System ca
 
 ![Dumper](photos/dumper.jpg)
 
+![Dumper](photos/dumper2.jpg)
+
+![Dumper](photos/dumper3.jpg)
+
 You can use it to:
 
 * Dump cartridges, so you can play copy of your cartridge on emulator.
