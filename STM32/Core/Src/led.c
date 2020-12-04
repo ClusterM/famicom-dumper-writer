@@ -115,6 +115,11 @@ void led_off()
   idle_value = 0;
 }
 
+void led_white()
+{
+  set_led_color(0x40, 0x40, 0x40);
+}
+
 void led_green()
 {
   set_led_color(0x00, 0x80, 0x00);
