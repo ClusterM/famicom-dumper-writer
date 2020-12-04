@@ -37,7 +37,7 @@
 
 
 set_global_assignment -name FAMILY MAX3000A
-set_global_assignment -name DEVICE "EPM3128ATC100-7"
+set_global_assignment -name DEVICE "EPM3064ATC100-7"
 set_global_assignment -name TOP_LEVEL_ENTITY FamicomDumper
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "09:20:26  OCTOBER 29, 2020"
