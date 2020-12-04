@@ -157,7 +157,14 @@ void comm_proceed(uint8_t data)
 
 void comm_init()
 {
+  send_buffer_pos = 0;
+  comm_send_crc = 0;
+  comm_send_length = 0;
+  comm_send_pos = 0;
   comm_recv_pos = 0;
-  comm_recv_done = 0;
+  comm_recv_crc = 0;
   comm_recv_error = 0;
+  comm_recv_command = 0;
+  comm_recv_length = 0;
+  comm_recv_done = 0;
 }
