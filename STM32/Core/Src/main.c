@@ -154,8 +154,8 @@ int main(void)
         comm_send_byte(PROTOCOL_VERSION);
         comm_send_byte(0xFF);
         comm_send_byte(0xFF); // unlimited send buffer
-        comm_send_byte((RECV_BUFFER_SIZE - 4) & 0xFF);
-        comm_send_byte(((RECV_BUFFER_SIZE - 4) >> 8) & 0xFF);
+        comm_send_byte((RECV_BUFFER_SIZE - 5) & 0xFF);
+        comm_send_byte(((RECV_BUFFER_SIZE - 5) >> 8) & 0xFF);
         break;
 
       case COMMAND_COOLBOY_READ_REQUEST:
