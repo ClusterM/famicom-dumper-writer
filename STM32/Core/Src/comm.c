@@ -81,19 +81,19 @@ void comm_send(uint8_t *address, uint16_t length)
     length--;
   }
   /*
-  dma_done = 0;
-  HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel1, (uint32_t) address, (uint32_t) &send_buffer[send_buffer_pos], length);
-  while (!dma_done)
-  {
-  }
-  comm_send_pos += length;
-  while (length)
-  {
-    comm_send_crc = calc_crc8(comm_send_crc, send_buffer[send_buffer_pos++]);
-    length--;
-  }
-  check_send_buffer();
-  */
+   dma_done = 0;
+   HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel1, (uint32_t) address, (uint32_t) &send_buffer[send_buffer_pos], length);
+   while (!dma_done)
+   {
+   }
+   comm_send_pos += length;
+   while (length)
+   {
+   comm_send_crc = calc_crc8(comm_send_crc, send_buffer[send_buffer_pos++]);
+   length--;
+   }
+   check_send_buffer();
+   */
 }
 
 void comm_proceed(uint8_t data)
@@ -106,49 +106,58 @@ void comm_proceed(uint8_t data)
     comm_recv_crc = 0;
     comm_recv_done = 0;
   }
-  comm_recv_crc= calc_crc8(comm_recv_crc, data);
-  uint16_t l = comm_recv_pos - 4;
+  comm_recv_crc = calc_crc8(comm_recv_crc, data);
   switch (comm_recv_pos)
   {
   case 0:
-    if (data != 'F')
     {
-      comm_recv_error = 1;
-      comm_start(COMMAND_ERROR_INVALID, 0);
+      if (data != 'F')
+      {
+        comm_recv_error = 1;
+        comm_start(COMMAND_ERROR_INVALID, 0);
+      }
     }
     break;
   case 1:
-    comm_recv_command = data;
+    {
+      comm_recv_command = data;
+    }
     break;
   case 2:
-    comm_recv_length = data;
+    {
+      comm_recv_length = data;
+    }
     break;
   case 3:
-    comm_recv_length |= (uint16_t) data << 8;
+    {
+      comm_recv_length |= (uint16_t) data << 8;
+    }
     break;
   default:
-    if (l >= sizeof(recv_buffer))
     {
-      comm_recv_pos = 0;
-      comm_recv_error = 1;
-      comm_start(COMMAND_ERROR_OVERFLOW, 0);
-      return;
-    } else if (l < comm_recv_length)
-    {
-      recv_buffer[l] = data;
-    } else if (l == comm_recv_length)
-    {
-      if (!comm_recv_crc)
+      uint16_t pos = comm_recv_pos - 4;
+      if (pos >= sizeof(recv_buffer))
       {
-        comm_recv_done = 1;
-        //printf("Received command %02X, length %d\n", comm_recv_command, comm_recv_length);
-      } else
-      {
+        comm_recv_pos = 0;
         comm_recv_error = 1;
-        comm_start(COMMAND_ERROR_CRC, 0);
+        comm_start(COMMAND_ERROR_OVERFLOW, 0);
+        return;
+      } else if (pos < comm_recv_length)
+      {
+        recv_buffer[pos] = data;
+      } else if (pos == comm_recv_length)
+      {
+        if (!comm_recv_crc)
+        {
+          comm_recv_done = 1;
+        } else
+        {
+          comm_recv_error = 1;
+          comm_start(COMMAND_ERROR_CRC, 0);
+        }
+        comm_recv_pos = 0;
+        return;
       }
-      comm_recv_pos = 0;
-      return;
     }
     break;
   }
