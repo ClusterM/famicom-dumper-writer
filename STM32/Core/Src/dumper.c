@@ -392,20 +392,6 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
   PRG(FDS_IRQ_CONTROL) = 0x00; // disable timer IRQ
   PRG(FDS_MASTER_IO) = 0x01; // enable disk registers
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset
-  uint8_t ram_adapter_connected = 1;
-  PRG(FDS_EXT_WRITE) = 0x00; // Ext. connector
-  PRG(0x0000) = 0xFF; // To prevent open bus read
-  if ((PRG(FDS_EXT_READ) & 0x7F) != 0x00)
-    ram_adapter_connected = 0;
-  PRG(FDS_EXT_WRITE) = 0xFF; // Ext. connector
-  PRG(0x0000) = 0x00; // To prevent open bus read
-  if ((PRG(FDS_EXT_READ) & 0x7F) != 0x7F)
-    ram_adapter_connected = 0;
-  if (!ram_adapter_connected)
-  {
-    comm_start(COMMAND_FDS_NOT_CONNECTED, 0);
-    return;
-  }
   if (PRG(FDS_DRIVE_STATUS) & 1)
   {
     comm_start(COMMAND_FDS_DISK_NOT_INSERTED, 0);
