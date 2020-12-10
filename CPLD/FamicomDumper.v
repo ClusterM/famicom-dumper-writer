@@ -11,7 +11,6 @@ module FamicomDumper # (
    input a13,
    input a15, 
    output nwait,
-   input reserved,
  
    output romsel,
    output cpu_rw,
