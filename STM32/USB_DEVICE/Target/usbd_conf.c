@@ -72,7 +72,9 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
   if(pcdHandle->Instance==USB)
   {
   /* USER CODE BEGIN USB_MspInit 0 */
-
+    // Tweak to set max current to 500ma
+    uint16_t length;
+    *(USBD_CDC.GetFSConfigDescriptor(&length) + 8) = (500 / 2);
   /* USER CODE END USB_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_USB_CLK_ENABLE();
