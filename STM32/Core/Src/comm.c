@@ -25,9 +25,10 @@ static void comm_flush(void)
   uint8_t res;
   do
   {
-    if (HAL_GetTick() >= start_time + SEND_TIMEOUT) // 5 seconds timeout
+    if (HAL_GetTick() >= start_time + SEND_TIMEOUT) // timeout
       break;
     res = CDC_Transmit_FS((uint8_t*) send_buffer, send_buffer_pos);
+    //HAL_Delay(1);
   } while (res != USBD_OK);
   send_buffer_pos = 0;
 }
@@ -52,7 +53,6 @@ void check_send_buffer()
 
 void comm_start(uint8_t command, uint16_t length)
 {
-  //printf("Sending command %02X, length %d\n", command, length);
   comm_send_crc = 0;
   send_buffer_pos = 0;
   comm_send_pos = 0;
@@ -80,20 +80,6 @@ void comm_send(uint8_t *address, uint16_t length)
     address++;
     length--;
   }
-  /*
-   dma_done = 0;
-   HAL_DMA_Start_IT(&hdma_memtomem_dma1_channel1, (uint32_t) address, (uint32_t) &send_buffer[send_buffer_pos], length);
-   while (!dma_done)
-   {
-   }
-   comm_send_pos += length;
-   while (length)
-   {
-   comm_send_crc = calc_crc8(comm_send_crc, send_buffer[send_buffer_pos++]);
-   length--;
-   }
-   check_send_buffer();
-   */
 }
 
 void comm_proceed(uint8_t data)
