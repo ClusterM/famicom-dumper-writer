@@ -296,10 +296,11 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
   {
     if (!transfer_fds_byte(&data, 0, end_of_head))
       return 0;
+    // parse file size if need
     if (file_size)
     {
       if (b == 13)
-        *file_size |= data;
+        *file_size = data;
       else if (b == 14)
         *file_size |= data << 8;
     }
@@ -329,13 +330,14 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
 {
   uint8_t end_of_head = 0;
   uint32_t start_time;
+  uint16_t pos = 0;
   led_red();
   PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON; // enable writing without transfer
   delay_clock(gap_delay);
   PRG(FDS_DATA_WRITE) = 0x00; // write $00
   // start transfer, enable IRQ
   PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
-  transfer_fds_byte(0, 0x80, &end_of_head);  // write $80
+  transfer_fds_byte(0, 0x80, &end_of_head); // write $80
   while (length)
   {
     if (end_of_head)
@@ -348,6 +350,13 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
       return 0;
     data++;
     length--;
+    pos++;
+    // avoid copy protection, lol
+    if ((pos % FDS_COPY_PROTECTION_RESET_INTERVAL) == 0)
+    {
+      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
+      PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
+    }
   }
   if (!transfer_fds_byte(0, 0xFF, &end_of_head))
     return 0;
@@ -357,7 +366,7 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
     comm_start(COMMAND_FDS_END_OF_HEAD, 0);
     return 0;
   }
-  PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC;  // enable CRC control
+  PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
   delay_clock(FDS_WRITE_CRC_DELAY);
   start_time = HAL_GetTick();
   while (1)
@@ -376,11 +385,10 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
 
   led_cyan();
-  return 1;
+  return 1; // success
 }
 
-void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths,
-    uint8_t *write_data)
+void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths, uint8_t *write_data)
 {
   uint8_t crc_ok = 1;
   uint8_t end_of_head = 0;

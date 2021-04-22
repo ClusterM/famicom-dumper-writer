@@ -27,6 +27,8 @@
 #define FDS_WRITE_GAP_BETWEEN_BLOCKS 17917
 #define FDS_WRITE_CRC_DELAY 897
 
+#define FDS_COPY_PROTECTION_RESET_INTERVAL 0x4000
+
 #define PRG(address) (*(volatile uint8_t*) ((address) + 0x60000000))
 #define CHR(address) (*(volatile uint8_t*) ((address) + 0x64000000))
 #define IRQ_FIRED (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin))
