@@ -260,9 +260,9 @@ static uint8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of
   else
     dummy = PRG(FDS_DATA_READ);
   PRG(FDS_DATA_WRITE) = input; // clear interrupt
-  uint8_t status = PRG(FDS_DISK_STATUS);
+  uint8_t disk_status = PRG(FDS_DISK_STATUS);
   if (end_of_head)
-    *end_of_head |= (status >> 6) & 1;
+    *end_of_head |= (disk_status >> 6) & 1;
   start_time = HAL_GetTick();
   while (IRQ_FIRED)
   {
@@ -278,11 +278,13 @@ static uint8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of
   return 1;
 }
 
-static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_ok, uint8_t *end_of_head, uint16_t *file_size, uint32_t gap_delay)
+static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file_size, uint32_t gap_delay)
 {
   uint8_t data;
-  uint8_t status;
+  uint8_t disk_status;
   uint32_t b;
+  uint8_t crc_ok = 1;
+  uint8_t end_of_head = 0;
 
   delay_clock(gap_delay);
   if (send)
@@ -294,7 +296,7 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON;
   for (b = 0; b < length; b++)
   {
-    if (!transfer_fds_byte(&data, 0, end_of_head))
+    if (!transfer_fds_byte(&data, 0, &end_of_head))
       return 0;
     // parse file size if need
     if (file_size)
@@ -307,18 +309,33 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint8_t *crc_o
     if (send)
       comm_send_byte(data);
   }
-  if (!transfer_fds_byte(0, 0, end_of_head))
+  if (!transfer_fds_byte(0, 0, &end_of_head))
     return 0;
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
-  if (!transfer_fds_byte(0, 0, end_of_head))
+  if (!transfer_fds_byte(0, 0, &end_of_head))
     return 0;
-  status = PRG(FDS_DISK_STATUS);
-  *crc_ok &= ((status >> 4) & 1) ^ 1;
-  *end_of_head |= (status >> 6) & 1;
+  disk_status = PRG(FDS_DISK_STATUS);
+  crc_ok &= ((disk_status >> 4) & 1) ^ 1;
+  end_of_head |= (disk_status >> 6) & 1;
   if (send)
   {
-    comm_send_byte(*crc_ok); // CRC check result
-    comm_send_byte(*end_of_head); // end of head meet?
+    comm_send_byte(crc_ok); // CRC check result
+    comm_send_byte(end_of_head); // end of head meet?
+  }
+  if (!crc_ok || end_of_head)
+  {
+    // invalid data or end of disk, abort transfer
+    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
+    HAL_Delay(50);
+    if (send)
+      comm_start(COMMAND_FDS_READ_RESULT_END, 0);
+    else {
+      if (!crc_ok)
+        comm_start(COMMAND_FDS_BLOCK_CRC_ERROR, 0);
+      else
+        comm_start(COMMAND_FDS_END_OF_HEAD, 0);
+    }
+    return 0;
   }
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
 
@@ -371,8 +388,8 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
   start_time = HAL_GetTick();
   while (1)
   {
-    uint8_t status = PRG(FDS_DRIVE_STATUS);
-    if (!(status & 2))
+    uint8_t drive_status = PRG(FDS_DRIVE_STATUS);
+    if (!(drive_status & FDS_DRIVE_STATUS_DISK_NOT_READY))
       break; // ready
     // timeout 1 sec
     if (HAL_GetTick() - start_time >= 1000)
@@ -388,32 +405,39 @@ static uint8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_dela
   return 1; // success
 }
 
-void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths, uint8_t *write_data)
+uint8_t fds_transfer_real(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths, uint8_t *write_data)
 {
-  uint8_t crc_ok = 1;
-  uint8_t end_of_head = 0;
   uint8_t current_block = 0;
-  uint8_t current_writing_block = 0;
   uint32_t start_time;
+  uint8_t drive_status;
+  uint8_t blocks_writed = 0;
 
   led_magenta();
   PRG(FDS_IRQ_CONTROL) = 0x00; // disable timer IRQ
   PRG(FDS_MASTER_IO) = 0x01; // enable disk registers
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset
-  if (PRG(FDS_DRIVE_STATUS) & 1)
+  drive_status = PRG(FDS_DRIVE_STATUS);
+  // is disk inserted?
+  if (drive_status & FDS_DRIVE_STATUS_DISK_NOT_INSERTED)
   {
     comm_start(COMMAND_FDS_DISK_NOT_INSERTED, 0);
-    return;
+    return 0;
+  }
+  // is it write protected while we are writing?
+  if (block_write_count && (drive_status & FDS_DRIVE_STATUS_DISK_WRITE_PROTECTED))
+  {
+    comm_start(COMMAND_FDS_DISK_WRITE_PROTECTED, 0);
+    return 0;
   }
   // battery test
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
   HAL_Delay(100);
-  if ((PRG(FDS_EXT_READ) & 0x80) == 0)
+  if (!(PRG(FDS_EXT_READ) & 0x80))
   {
     // battery low
     PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
     comm_start(COMMAND_FDS_BATTERY_LOW, 0);
-    return;
+    return 0;
   }
   // waiting until drive is rewinded
   start_time = HAL_GetTick();
@@ -424,9 +448,9 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     {
       PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
-      return;
+      return 0;
     }
-  } while (!(PRG(FDS_DRIVE_STATUS) & 2));
+  } while (!(PRG(FDS_DRIVE_STATUS) & FDS_DRIVE_STATUS_DISK_NOT_READY));
   start_time = HAL_GetTick();
   do
   {
@@ -435,89 +459,89 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     {
       PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
       comm_start(COMMAND_FDS_TIMEOUT, 0);
-      return;
+      return 0;
     }
-  } while (PRG(FDS_DRIVE_STATUS) & 2);
+  } while (PRG(FDS_DRIVE_STATUS) & FDS_DRIVE_STATUS_DISK_NOT_READY);
 
   led_cyan();
 
   // disk info block
-  if (block_write_count && (current_block == block_write_ids[current_writing_block]))
+  if (block_write_count && (current_block == block_write_ids[blocks_writed]))
   {
     // gap delay while writing = ~28300 bits = (~28300 / 8)bits * ~165cycles = ~583687.5
-    uint16_t write_length = write_lengths[current_writing_block];
+    uint16_t write_length = write_lengths[blocks_writed];
     if (!write_fds_block(write_data, write_length, FDS_WRITE_GAP_BEFORE_FIRST_BLOCK))
-      return;
+      return 0;
     write_data += write_length;
-    current_writing_block++;
+    blocks_writed++;
     block_write_count--;
   } else
   {
     // gap delay while reading = ~486974 cycles
-    if (!read_fds_block_send(56, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BEFORE_FIRST_BLOCK))
-      return;
+    if (!read_fds_block_send(56, (current_block >= block_read_start) && block_read_count, 0, FDS_READ_GAP_BEFORE_FIRST_BLOCK))
+      return 0;
   }
   if ((current_block >= block_read_start) && block_read_count)
     block_read_count--;
   current_block++;
 
-  if (crc_ok && !end_of_head && (block_read_count || block_write_count))
+  if (block_read_count || block_write_count)
   {
     // file amount block
-    if (block_write_count && (current_block == block_write_ids[current_writing_block]))
+    if (block_write_count && (current_block == block_write_ids[blocks_writed]))
     {
-      uint16_t write_length = write_lengths[current_writing_block];
+      uint16_t write_length = write_lengths[blocks_writed];
       if (!write_fds_block(write_data, write_length, FDS_WRITE_GAP_BETWEEN_BLOCKS))
-        return;
+        return 0;
       write_data += write_length;
-      current_writing_block++;
+      blocks_writed++;
       block_write_count--;
     } else
     {
-      if (!read_fds_block_send(2, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
-        return;
+      if (!read_fds_block_send(2, (current_block >= block_read_start) && block_read_count, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
+        return 0;
     }
     if ((current_block >= block_read_start) && block_read_count)
       block_read_count--;
     current_block++;
   }
 
-  while (crc_ok && !end_of_head && (block_read_count || block_write_count))
+  while (block_read_count || block_write_count)
   {
     // file header block
     uint16_t file_size = 0; // size of the next file
-    if (block_write_count && (current_block == block_write_ids[current_writing_block]))
+    if (block_write_count && (current_block == block_write_ids[blocks_writed]))
     {
-      uint16_t write_length = write_lengths[current_writing_block];
+      uint16_t write_length = write_lengths[blocks_writed];
       if (!write_fds_block(write_data, write_length, FDS_WRITE_GAP_BETWEEN_BLOCKS))
-        return;
+        return 0;
       write_data += write_length;
-      current_writing_block++;
+      blocks_writed++;
       block_write_count--;
     } else
     {
-      if (!read_fds_block_send(16, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, &file_size, FDS_READ_GAP_BETWEEN_BLOCKS))
-        return;
+      if (!read_fds_block_send(16, (current_block >= block_read_start) && block_read_count, &file_size, FDS_READ_GAP_BETWEEN_BLOCKS))
+        return 0;
     }
     if ((current_block >= block_read_start) && block_read_count)
       block_read_count--;
     current_block++;
 
-    if (crc_ok && !end_of_head && (block_read_count || block_write_count))
+    if (block_read_count || block_write_count)
     {
       // file data block
-      if (block_write_count && (current_block == block_write_ids[current_writing_block]))
+      if (block_write_count && (current_block == block_write_ids[blocks_writed]))
       {
-        uint16_t write_length = write_lengths[current_writing_block];
+        uint16_t write_length = write_lengths[blocks_writed];
         if (!write_fds_block(write_data, write_length, FDS_WRITE_GAP_BETWEEN_BLOCKS))
-          return;
+          return 0;
         write_data += write_length;
-        current_writing_block++;
+        blocks_writed++;
         block_write_count--;
       } else
       {
-        if (!read_fds_block_send(file_size + 1, (current_block >= block_read_start) && block_read_count, &crc_ok, &end_of_head, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
-          return;
+        if (!read_fds_block_send(file_size + 1, (current_block >= block_read_start) && block_read_count, 0, FDS_READ_GAP_BETWEEN_BLOCKS))
+          return 0;
       }
       if ((current_block >= block_read_start) && block_read_count)
         block_read_count--;
@@ -525,15 +549,21 @@ void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t bl
     }
   }
 
-  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
+  return 1;
+}
 
-  HAL_Delay(50);
-  if (current_writing_block && !block_write_count && !block_read_count)
+void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths, uint8_t *write_data)
+{
+  uint8_t ok = fds_transfer_real(block_read_start, block_read_count, block_write_count, block_write_ids, write_lengths, write_data);
+  PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
+  if (ok)
   {
-    comm_start(COMMAND_FDS_WRITE_DONE, 0);
-    return;
+    HAL_Delay(50);
+    if (block_write_count && !block_read_count)
+      comm_start(COMMAND_FDS_WRITE_DONE, 0);
+    else
+      comm_start(COMMAND_FDS_READ_RESULT_END, 0);
   }
-  comm_start(COMMAND_FDS_READ_RESULT_END, 0);
 }
 
 void get_mirroring()

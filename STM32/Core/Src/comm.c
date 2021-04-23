@@ -28,7 +28,6 @@ static void comm_flush(void)
     if (HAL_GetTick() >= start_time + SEND_TIMEOUT) // timeout
       break;
     res = CDC_Transmit_FS((uint8_t*) send_buffer, send_buffer_pos);
-    //HAL_Delay(1);
   } while (res != USBD_OK);
   send_buffer_pos = 0;
 }
