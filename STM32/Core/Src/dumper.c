@@ -431,6 +431,7 @@ uint8_t fds_transfer_real(uint8_t block_read_start, uint8_t block_read_count, ui
   }
   // battery test
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // monor on, unreset
+  PRG(FDS_EXT_WRITE) = 0xFF;
   HAL_Delay(100);
   if (!(PRG(FDS_EXT_READ) & 0x80))
   {
