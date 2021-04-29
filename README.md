@@ -32,7 +32,12 @@ Bill of Materials:
 
 ## Firmware
 
-You need to write firmware to two cips: the STM32 chip using ST-Link programmer and the EPM1270 CPLD chip using USB Blaster programmer.
+You need to write firmware to two chips: the STM32 chip using ST-Link programmer and the EPM1270 CPLD chip using USB Blaster programmer.
+
+
+## Driver
+
+Under Windows the driver is usually installed automatically. If it doesn't, you can get the driver here: [https://www.st.com/en/development-tools/stsw-stm32102.html](https://www.st.com/en/development-tools/stsw-stm32102.html) - registration required but it's free.
 
 
 ## Software
