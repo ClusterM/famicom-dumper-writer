@@ -146,7 +146,6 @@ int main(void)
     if (comm_recv_done)
     {
       comm_recv_done = 0;
-      //printf("Command: %02X\n", comm_recv_command);
       switch (comm_recv_command)
       {
       case COMMAND_PRG_INIT:

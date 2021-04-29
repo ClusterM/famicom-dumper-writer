@@ -19,17 +19,21 @@ volatile uint8_t comm_recv_done;
 extern DMA_HandleTypeDef hdma_memtomem_dma1_channel1;
 extern volatile uint8_t dma_done;
 
-static void comm_flush(void)
+static uint8_t comm_flush(void)
 {
   uint32_t start_time = HAL_GetTick();
   uint8_t res;
   do
   {
     if (HAL_GetTick() >= start_time + SEND_TIMEOUT) // timeout
-      break;
+    {
+      comm_init();
+      return 0;
+    }
     res = CDC_Transmit_FS((uint8_t*) send_buffer, send_buffer_pos);
   } while (res != USBD_OK);
   send_buffer_pos = 0;
+  return 1;
 }
 
 static void comm_send_and_calc(uint8_t data)
@@ -38,19 +42,21 @@ static void comm_send_and_calc(uint8_t data)
   send_buffer[send_buffer_pos++] = data;
 }
 
-void check_send_buffer()
+static uint8_t check_send_buffer()
 {
+  uint8_t ok = 1;
   if (comm_send_pos >= comm_send_length)
   {
     send_buffer[send_buffer_pos++] = comm_send_crc;
-    comm_flush();
+    ok &= comm_flush();
   } else if (send_buffer_pos >= sizeof(send_buffer))
   {
-    comm_flush();
+    ok &= comm_flush();
   }
+  return ok;
 }
 
-void comm_start(uint8_t command, uint16_t length)
+uint8_t comm_start(uint8_t command, uint16_t length)
 {
   comm_send_crc = 0;
   send_buffer_pos = 0;
@@ -60,25 +66,26 @@ void comm_start(uint8_t command, uint16_t length)
   comm_send_and_calc(length & 0xff);
   comm_send_and_calc((length >> 8) & 0xff);
   comm_send_length = length;
-
-  check_send_buffer();
+  return check_send_buffer();
 }
 
-void comm_send_byte(uint8_t data)
+uint8_t comm_send_byte(uint8_t data)
 {
   comm_send_and_calc(data);
   comm_send_pos++;
-  check_send_buffer();
+  return check_send_buffer();
 }
 
-void comm_send(uint8_t *address, uint16_t length)
+uint8_t comm_send(uint8_t *address, uint16_t length)
 {
   while (length)
   {
-    comm_send_byte(*address);
+    if (!comm_send_byte(*address))
+      return 0;
     address++;
     length--;
   }
+  return 1;
 }
 
 void comm_proceed(uint8_t data)

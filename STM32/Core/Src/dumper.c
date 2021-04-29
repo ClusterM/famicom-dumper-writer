@@ -38,7 +38,7 @@ void reset(void)
 
 void set_flash_buffer_size(uint16_t value)
 {
-  // Set maximum number of bytes in multi-byte program
+  // Set maximum number of bytes in multi-byte flash program
   uint8_t bit_value = 0;
   while (value > 1)
   {
@@ -307,7 +307,10 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file
         *file_size |= data << 8;
     }
     if (send)
-      comm_send_byte(data);
+    {
+      if (!comm_send_byte(data))
+        return 0;
+    }
   }
   if (!transfer_fds_byte(0, 0, &end_of_head))
     return 0;
@@ -319,8 +322,10 @@ static uint8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file
   end_of_head |= (disk_status >> 6) & 1;
   if (send)
   {
-    comm_send_byte(crc_ok); // CRC check result
-    comm_send_byte(end_of_head); // end of head meet?
+    if (!comm_send_byte(crc_ok)) // CRC check result
+      return 0;
+    if (!comm_send_byte(end_of_head)) // end of head meet?
+      return 0;
   }
   if (!crc_ok || end_of_head)
   {

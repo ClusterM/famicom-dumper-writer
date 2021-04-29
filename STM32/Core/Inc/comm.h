@@ -56,9 +56,9 @@
 #define COMMAND_DEBUG 0xFF
 
 void comm_init();
-void comm_start(uint8_t command, uint16_t length);
-void comm_send_byte(uint8_t data);
-void comm_send(uint8_t* address, uint16_t length);
+uint8_t comm_start(uint8_t command, uint16_t length);
+uint8_t comm_send_byte(uint8_t data);
+uint8_t comm_send(uint8_t* address, uint16_t length);
 void comm_proceed(uint8_t data);
 
 extern volatile uint8_t comm_recv_command;
