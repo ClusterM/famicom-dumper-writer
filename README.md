@@ -16,7 +16,7 @@ You can use it to:
 * Write special cartridges like [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard).
 * Rewrite ultracheap chinese COOLBOY cartridges. Soldering is required to work with old versions but it's very simple. New versions can be rewritten without soldering.
 * Test your cartridges.
-* Read and frite Famicom Disk System cards using FDS drive with the RAM adapter.
+* Read and write Famicom Disk System cards using FDS drive with the RAM adapter.
 * Some reverse engineering.
 * Anything else that requires Famicom bus simulation.
 
