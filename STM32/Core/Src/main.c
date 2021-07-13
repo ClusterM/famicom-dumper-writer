@@ -580,17 +580,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(RESERVED_GPIO_Port, RESERVED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(COOLBOY_MODE_GPIO_Port, COOLBOY_MODE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SHIFTERS_OE_GPIO_Port, SHIFTERS_OE_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : RESERVED_Pin */
-  GPIO_InitStruct.Pin = RESERVED_Pin;
+  /*Configure GPIO pin : COOLBOY_MODE_Pin */
+  GPIO_InitStruct.Pin = COOLBOY_MODE_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(RESERVED_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(COOLBOY_MODE_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;

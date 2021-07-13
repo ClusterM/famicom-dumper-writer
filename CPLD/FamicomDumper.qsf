@@ -72,3 +72,4 @@ set_location_assignment PIN_19 -to led_prg_read
 set_location_assignment PIN_18 -to led_prg_write
 set_location_assignment PIN_15 -to led_chr_read
 set_location_assignment PIN_14 -to led_chr_write
+set_location_assignment PIN_31 -to coolboy_mode

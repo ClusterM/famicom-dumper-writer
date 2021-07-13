@@ -22,6 +22,7 @@ module FamicomDumper # (
    output ppu_dir,
    output ppu_oe,
  
+   input coolboy_mode,
    output coolboy_oe,
    output coolboy_we,
  
@@ -63,47 +64,47 @@ wire led_on = led_timer < ((1 << (LEDS_TIMER_SIZE + 1)) - 1);
 
 always @ (negedge master_clock)
 begin
-	if (m2)
-	begin
-		neg_m2_timer = 0;
-	end else begin
-		neg_m2_timer = neg_m2_timer + 1'b1;
-	end
-	
-	// waiting for ne1
-	if (!ne1_active) begin	
-		stage = (!m2 && neg_m2_timer < 7) ? 2 : 0;
-		wait_timer = 0;
-		cpu_shifter_enabled = 0;
-		reg_cpu_rw = 1; // read mode
-	end 
-	else if (stage == 0) // low M2?
-	begin
-		// waiting for high M2
-		if (m2) stage = 1;
-	end 
-	else if (stage == 1) // low M2
-	begin
-		// waiting for low M2
-		if (!m2) stage = 2;
-	end 
-	else if (stage == 2) // low M2
-	begin
-		// set direction to writing if need
-		if (!nwe) reg_cpu_rw = 0; 		
-		// enable shifter
-		cpu_shifter_enabled = 1;
-		// waiting for high M2
-		// actual reading/writing starts here
-		if (m2) stage = 3;
-	end 
-	else if (stage == 3) // high M2
-	begin
-		if (ne1_active && waiting)
-		begin
-			wait_timer = wait_timer + 1'b1;
-		end
-	end	
+   if (m2)
+   begin
+      neg_m2_timer = 0;
+   end else begin
+      neg_m2_timer = neg_m2_timer + 1'b1;
+   end
+   
+   // waiting for ne1
+   if (!ne1_active) begin   
+      stage = (!m2 && neg_m2_timer < 7) ? 2 : 0;
+      wait_timer = 0;
+      cpu_shifter_enabled = 0;
+      reg_cpu_rw = 1; // read mode
+   end 
+   else if (stage == 0) // low M2?
+   begin
+      // waiting for high M2
+      if (m2) stage = 1;
+   end 
+   else if (stage == 1) // low M2
+   begin
+      // waiting for low M2
+      if (!m2) stage = 2;
+   end 
+   else if (stage == 2) // low M2
+   begin
+      // set direction to writing if need
+      if (!nwe) reg_cpu_rw = 0;       
+      // enable shifter
+      cpu_shifter_enabled = 1;
+      // waiting for high M2
+      // actual reading/writing starts here
+      if (m2) stage = 3;
+   end 
+   else if (stage == 3) // high M2
+   begin
+      if (ne1_active && waiting)
+      begin
+         wait_timer = wait_timer + 1'b1;
+      end
+   end   
 end
 
 always @ (posedge m2)
