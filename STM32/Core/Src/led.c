@@ -100,11 +100,11 @@ void set_led_color(uint8_t r, uint8_t g, uint8_t b)
   uint8_t i;
   const uint8_t led = 0;
   for (i = 0; i < 8; i++)
-    pwm_values[led * 8 * 3 + i] = ((r >> (7 - i)) & 1) ? 67 : 22;
+    pwm_values[led * 8 * 3 + i] = ((r >> (7 - i)) & 1) ? 65 : 24;
   for (i = 0; i < 8; i++)
-    pwm_values[led * 8 * 3 + 8 + i] = ((g >> (7 - i)) & 1) ? 67 : 22;
+    pwm_values[led * 8 * 3 + 8 + i] = ((g >> (7 - i)) & 1) ? 65 : 24;
   for (i = 0; i < 8; i++)
-    pwm_values[led * 8 * 3 + 16 + i] = ((b >> (7 - i)) & 1) ? 67 : 22;
+    pwm_values[led * 8 * 3 + 16 + i] = ((b >> (7 - i)) & 1) ? 65 : 24;
   pwm_values[sizeof(pwm_values) - 1] = 0;
   update_led();
 }
