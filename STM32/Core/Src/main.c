@@ -159,6 +159,10 @@ int main(void)
         comm_send_byte((FIRMWARE_VERSION_MAJOR >> 8) & 0xFF);
         comm_send_byte(FIRMWARE_VERSION_MINOR & 0xFF);
         comm_send_byte((FIRMWARE_VERSION_MINOR >> 8) & 0xFF);
+        comm_send_byte(FIRMWARE_VERSION_MAJOR & 0xFF);
+        comm_send_byte((FIRMWARE_VERSION_MAJOR >> 8) & 0xFF);
+        comm_send_byte(FIRMWARE_VERSION_MINOR & 0xFF);
+        comm_send_byte((FIRMWARE_VERSION_MINOR >> 8) & 0xFF);
         set_coolboy_gpio_mode(0);
         break;
 

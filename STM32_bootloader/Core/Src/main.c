@@ -66,24 +66,27 @@ static void MX_TIM2_Init(void);
 /* USER CODE BEGIN 0 */
 
 static void start_app(void) {
-  uint32_t appJumpAddress;
-  void (*GoToApp)(void);
-
-  appJumpAddress = *((volatile uint32_t*)(APP_ADDRESS + 4));
-  GoToApp = (void (*)(void))appJumpAddress;
+  // App start address
+  void (*jmp_to_app)(void) = (void (*)(void))(*((volatile uint32_t*)(APP_ADDRESS + 4)));
+  // Vector table
   SCB->VTOR = APP_ADDRESS;
-  __set_MSP(*((volatile uint32_t*) APP_ADDRESS)); //stack pointer (to RAM) for USER app in this address
-  GoToApp();
+  // Stack pointer (to RAM) for USER app in this address
+  __set_MSP(*((volatile uint32_t*) APP_ADDRESS));
+  jmp_to_app();
 
+  // Should not execute
   while (1) {}
 }
 
 
 static void error(void)
 {
+  // Dispose resources, show red LED and stop
   f_mount(NULL, "", 1);
   HAL_FLASH_Lock();
   set_led_color(0xFF, 0x00, 0x00);
+  HAL_Delay(50);
+  __disable_irq();
   while (1) {}
 }
 
@@ -100,26 +103,38 @@ static void write_firmware(void)
   uint32_t SECTORError = 0;
   HAL_StatusTypeDef hres;
   uint16_t value;
+  HAL_StatusTypeDef hr;
 
+  // Unlock flash
+  hr = HAL_FLASH_Unlock();
+  if (hr != HAL_OK)
+    error();
+  // Mount FAT file system
   fr = f_mount(&FatFs, "", 1);
   if (fr)
     error();
+  // Open firmware file
   fr = f_open(&fil, FIRMWARE_FILE, FA_READ);
   if (fr)
     error();
   while (1) {
+	// Read data
     fr = f_read(&fil, buff, MSD_BLOCK_SIZE, &br);
     if (fr)
       error();
-    if (!br) break;
+    // Break if end of file
+    if (!br)
+    	break;
     if ((address % MSD_BLOCK_SIZE) != 0)
       error();
+    // Erase flash page
     EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
     EraseInitStruct.PageAddress = address;
     EraseInitStruct.NbPages = 1;
     hres = HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
     if (hres != HAL_OK)
       error();
+    // Write data
     for (i = 0; i < br; i += 2) {
       value = *(volatile uint16_t*) &buff[i];
       hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, value);
@@ -128,18 +143,18 @@ static void write_firmware(void)
       address += 2;
     }
   }
+  // Close file
   fr = f_close(&fil);
   if (fr)
     error();
-
+  // Delete file
   fr = f_unlink(FIRMWARE_FILE);
-  /*
-  if (fr)
-    error();
-  */
+  // Unmount
   fr = f_mount(NULL, "", 1);
   if (fr)
     error();
+  // Lock flash
+  HAL_FLASH_Lock();
 }
 
 /* USER CODE END 0 */
@@ -167,17 +182,29 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  // Pre-init
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM5_Init();
   MX_TIM2_Init();
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_Delay(100);
-  // If IRQ not fired...
+  HAL_Delay(10);
+  // If IRQ pin not grounded - start app
+#ifndef DEBUG
   if (HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin)) start_app();
+#endif
+  // Green LED
   set_led_color(0x00, 0xFF, 0x00);
+  // Need to release pin during one second
   HAL_Delay(1000);
-  if (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin)) start_app();
+  // If IRQ pin not released...
+  if (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin)) {
+	  // Turn off LED
+      set_led_color(0x00, 0x00, 0x00);
+      HAL_Delay(50);
+      // Start app
+	  start_app();
+  }
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -188,6 +215,7 @@ int main(void)
   MX_FATFS_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  // Yellow LED
   set_led_color(0xFF, 0xFF, 0x00);
   /*
   */
@@ -198,19 +226,25 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	// Check if last write operation was long time ago
     if (last_write_ts && (HAL_GetTick() - last_write_ts >= WRITE_TO_FLASH_TIME)) {
       FATFS FatFs;
       FRESULT fr;
+      // Mount FAT file system and check if firmware file exists
       f_mount(&FatFs, "", 1);
       fr = f_stat(FIRMWARE_FILE, NULL);
       f_mount(NULL, "", 1);
       if (fr == FR_OK) {
+    	// White LED
         set_led_color(0xFF, 0xFF, 0xFF);
+        // Disable USB MSD
         USBD_DeInit(&hUsbDeviceFS);
+        // Write firmware
         write_firmware();
+        // Turn off the LED
         set_led_color(0x00, 0x00, 0x00);
-        HAL_Delay(200);
-        //start_app();
+        HAL_Delay(50);
+        // Stop
         __disable_irq();
         while (1) { }
       } else {
@@ -269,6 +303,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+  HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_PLLCLK, RCC_MCODIV_1);
 }
 
 /**
@@ -415,6 +450,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(NE2_GPIO_Port, NE2_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : PA8 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : NOE_Pin NWE_Pin NE1_Pin */
   GPIO_InitStruct.Pin = NOE_Pin|NWE_Pin|NE1_Pin;
