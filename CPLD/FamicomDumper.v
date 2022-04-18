@@ -33,7 +33,7 @@ module FamicomDumper # (
 );
 
 assign romsel = !(m2 && a15 && ne1_active);
-assign cpu_rw = reg_cpu_rw;
+assign cpu_rw = reg_cpu_rw || coolboy_mode;
 assign cpu_oe = !cpu_shifter_enabled;
 assign cpu_dir = !reg_cpu_rw;
 assign ppu_rd = !(!ne2 && !noe);

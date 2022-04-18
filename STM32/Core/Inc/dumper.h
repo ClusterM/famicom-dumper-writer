@@ -2,6 +2,8 @@
 #define _DUMPER_H_
 
 #define PROTOCOL_VERSION 3
+#define FIRMWARE_VERSION_MAJOR 2
+#define FIRMWARE_VERSION_MINOR 0
 
 #define FDS_IRQ_CONTROL 0x4022
 #define FDS_MASTER_IO 0x4023
@@ -50,5 +52,6 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data);
 void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t* block_write_ids, uint16_t *write_lengths,
     uint8_t *write_data);
 void get_mirroring();
+void set_coolboy_gpio_mode(uint8_t coolboy_gpio_mode);
 
 #endif

@@ -585,3 +585,12 @@ void get_mirroring()
   dummy = CHR((1 << 10) | (1 << 11));
   comm_send_byte(HAL_GPIO_ReadPin(CIRAM_A10_GPIO_Port, CIRAM_A10_Pin));
 }
+
+
+void set_coolboy_gpio_mode(uint8_t coolboy_gpio_mode)
+{
+	if (coolboy_gpio_mode)
+		HAL_GPIO_WritePin(COOLBOY_MODE_GPIO_Port, COOLBOY_MODE_Pin, GPIO_PIN_SET);
+	else
+		HAL_GPIO_WritePin(COOLBOY_MODE_GPIO_Port, COOLBOY_MODE_Pin, GPIO_PIN_RESET);
+}

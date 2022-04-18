@@ -44,7 +44,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TIM_HandleTypeDef htim1;
+ TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
@@ -149,12 +149,17 @@ int main(void)
       switch (comm_recv_command)
       {
       case COMMAND_PRG_INIT:
-        comm_start(COMMAND_PRG_STARTED, 5);
+        comm_start(COMMAND_PRG_STARTED, 9);
         comm_send_byte(PROTOCOL_VERSION);
         comm_send_byte(0xFF);
         comm_send_byte(0xFF); // unlimited send buffer
         comm_send_byte((RECV_BUFFER_SIZE - 5) & 0xFF);
         comm_send_byte(((RECV_BUFFER_SIZE - 5) >> 8) & 0xFF);
+        comm_send_byte(FIRMWARE_VERSION_MAJOR & 0xFF);
+        comm_send_byte((FIRMWARE_VERSION_MAJOR >> 8) & 0xFF);
+        comm_send_byte(FIRMWARE_VERSION_MINOR & 0xFF);
+        comm_send_byte((FIRMWARE_VERSION_MINOR >> 8) & 0xFF);
+        set_coolboy_gpio_mode(0);
         break;
 
       case COMMAND_COOLBOY_READ_REQUEST:
@@ -234,6 +239,11 @@ int main(void)
         set_flash_buffer_size(recv_buffer[0] | ((uint16_t) recv_buffer[1] << 8));
         comm_start(COMMAND_SET_VALUE_DONE, 0);
         break;
+
+      case COMMAND_SET_COOLBOY_GPIO_MODE:
+    	set_coolboy_gpio_mode(recv_buffer[0]);
+        comm_start(COMMAND_SET_VALUE_DONE, 0);
+        break;
       }
       led_off();
     }
@@ -268,6 +278,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -741,5 +752,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
