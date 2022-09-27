@@ -32,17 +32,14 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -60,9 +57,6 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MSD_ADDRESS 0x8010000
-#define MSD_BLOCK_SIZE 2048
-#define MSD_BLOCK_COUNT 192 * 1024 / MSD_BLOCK_SIZE
 #define M2_Pin GPIO_PIN_0
 #define M2_GPIO_Port GPIOA
 #define WS2812_Pin GPIO_PIN_2
@@ -78,9 +72,6 @@ void Error_Handler(void);
 #define IRQ_Pin GPIO_PIN_7
 #define IRQ_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-#define APP_ADDRESS 0x08040000
-#define WRITE_TO_FLASH_TIME 1500
-#define FIRMWARE_FILE "FamicomDumper.bin"
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -36,6 +36,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
 #include "ff_gen_drv.h"
+#include "bootloader.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -156,12 +157,12 @@ DRESULT USER_write (
   if (res != HAL_OK)
     return RES_ERROR;
 
-  FLASH_EraseInitTypeDef EraseInitStruct;
-  uint32_t SECTORError = 0;
-  EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-  EraseInitStruct.PageAddress = address;
-  EraseInitStruct.NbPages = count;
-  res = HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
+  FLASH_EraseInitTypeDef erase_init_struct;
+  uint32_t sector_error = 0;
+  erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
+  erase_init_struct.PageAddress = address;
+  erase_init_struct.NbPages = count;
+  res = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
   if (res != HAL_OK) {
     HAL_FLASH_Lock();
     return RES_ERROR;

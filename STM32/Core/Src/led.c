@@ -62,7 +62,6 @@ static rgb hsv2rgb(hsv in)
     out.g = in.v;
     out.b = t;
     break;
-
   case 3:
     out.r = p;
     out.g = q;

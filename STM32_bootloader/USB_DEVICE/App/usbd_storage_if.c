@@ -23,7 +23,7 @@
 #include "usbd_storage_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "bootloader.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -259,12 +259,12 @@ int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t b
   res = HAL_FLASH_Unlock();
   if (res != HAL_OK) return USBD_FAIL;
 
-  FLASH_EraseInitTypeDef EraseInitStruct;
-  uint32_t SECTORError = 0;
-  EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-  EraseInitStruct.PageAddress = address;
-  EraseInitStruct.NbPages = blk_len;
-  res = HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
+  FLASH_EraseInitTypeDef erase_init_struct;
+  uint32_t sector_error = 0;
+  erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
+  erase_init_struct.PageAddress = address;
+  erase_init_struct.NbPages = blk_len;
+  res = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
   if (res != HAL_OK) {
     HAL_FLASH_Lock();
     return USBD_FAIL;

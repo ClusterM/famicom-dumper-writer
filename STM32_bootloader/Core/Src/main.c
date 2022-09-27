@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
-  * All rights reserved.</center></h2>
-  *
-  * This software component is licensed by ST under BSD 3-Clause license,
-  * the "License"; You may not use this file except in compliance with the
-  * License. You may obtain a copy of the License at:
-  *                        opensource.org/licenses/BSD-3-Clause
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.</center></h2>
+ *
+ * This software component is licensed by ST under BSD 3-Clause license,
+ * the "License"; You may not use this file except in compliance with the
+ * License. You may obtain a copy of the License at:
+ *                        opensource.org/licenses/BSD-3-Clause
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -24,6 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bootloader.h"
 #include "usbd_core.h"
 #include "led.h"
 /* USER CODE END Includes */
@@ -65,7 +66,8 @@ static void MX_TIM2_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-static void start_app(void) {
+static void start_app(void)
+{
   // App start address
   void (*jmp_to_app)(void) = (void (*)(void))(*((volatile uint32_t*)(APP_ADDRESS + 4)));
   // Vector table
@@ -75,22 +77,59 @@ static void start_app(void) {
   jmp_to_app();
 
   // Should not execute
-  while (1) {}
+  while (1)
+  {}
 }
-
 
 static void error(void)
 {
   // Dispose resources, show red LED and stop
   f_mount(NULL, "", 1);
   HAL_FLASH_Lock();
-  set_led_color(0xFF, 0x00, 0x00);
+  led_red();
   HAL_Delay(50);
   __disable_irq();
-  while (1) {}
+  while (1)
+  {
+  }
 }
 
-static void write_firmware(void)
+static void write_hardware_version(void)
+{
+  uint32_t value;
+  uint32_t current_value;
+  HAL_StatusTypeDef hres;
+  FLASH_EraseInitTypeDef erase_init_struct;
+  uint32_t sector_error = 0;
+  uint8_t HARDWARE_VERSION[] = { HARDWARE_VERSION_MAJOR & 0xFF, (HARDWARE_VERSION_MAJOR >> 8) && 0xFF, HARDWARE_VERSION_MINOR, HARDWARE_VERSION_SUFFIX };
+
+  // Write hardware version
+  value = *(uint32_t*)HARDWARE_VERSION;
+  current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
+  if (value != current_value)
+  {
+    // Flash can be locked by FATFS
+    hres = HAL_FLASH_Unlock();
+    if (hres != HAL_OK)
+      error();
+    erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
+    erase_init_struct.PageAddress = HARDWARE_VERSION_ADDRESS;
+    erase_init_struct.NbPages = 1;
+    hres = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
+    if (hres != HAL_OK)
+      error();
+    current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
+    hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, HARDWARE_VERSION_ADDRESS, value);
+    if (hres != HAL_OK)
+      error();
+    current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
+    if (value != current_value)
+      error();
+    HAL_FLASH_Lock();
+  }
+}
+
+static void write_firmware(FILINFO *bin_file)
 {
   int i;
   uint8_t buff[MSD_BLOCK_SIZE];
@@ -99,48 +138,50 @@ static void write_firmware(void)
   FRESULT fr;
   UINT br = 0;
   uint32_t address = APP_ADDRESS;
-  FLASH_EraseInitTypeDef EraseInitStruct;
-  uint32_t SECTORError = 0;
+  FLASH_EraseInitTypeDef erase_init_struct;
+  uint32_t sector_error = 0;
   HAL_StatusTypeDef hres;
-  uint16_t value;
-  HAL_StatusTypeDef hr;
+  uint32_t value;
 
   // Unlock flash
-  hr = HAL_FLASH_Unlock();
-  if (hr != HAL_OK)
+  hres = HAL_FLASH_Unlock();
+  if (hres != HAL_OK)
     error();
+
   // Mount FAT file system
   fr = f_mount(&FatFs, "", 1);
   if (fr)
     error();
   // Open firmware file
-  fr = f_open(&fil, FIRMWARE_FILE, FA_READ);
+  fr = f_open(&fil, bin_file->fname, FA_READ);
   if (fr)
     error();
-  while (1) {
-	// Read data
+  while (1)
+  {
+    // Read data
     fr = f_read(&fil, buff, MSD_BLOCK_SIZE, &br);
     if (fr)
       error();
     // Break if end of file
     if (!br)
-    	break;
+      break;
     if ((address % MSD_BLOCK_SIZE) != 0)
       error();
     // Erase flash page
-    EraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
-    EraseInitStruct.PageAddress = address;
-    EraseInitStruct.NbPages = 1;
-    hres = HAL_FLASHEx_Erase(&EraseInitStruct, &SECTORError);
+    erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
+    erase_init_struct.PageAddress = address;
+    erase_init_struct.NbPages = 1;
+    hres = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
     if (hres != HAL_OK)
       error();
     // Write data
-    for (i = 0; i < br; i += 2) {
-      value = *(volatile uint16_t*) &buff[i];
-      hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, address, value);
+    for (i = 0; i < br; i += 4)
+    {
+      value = *(volatile uint32_t*) &buff[i];
+      hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, value);
       if (hres != HAL_OK)
         error();
-      address += 2;
+      address += 4;
     }
   }
   // Close file
@@ -148,13 +189,50 @@ static void write_firmware(void)
   if (fr)
     error();
   // Delete file
-  fr = f_unlink(FIRMWARE_FILE);
+  fr = f_unlink(bin_file->fname);
   // Unmount
   fr = f_mount(NULL, "", 1);
   if (fr)
     error();
+
   // Lock flash
   HAL_FLASH_Lock();
+}
+
+int find_bin_file(FILINFO *bin_file)
+{
+  // Find first .bin file if any
+  int len, r = 0;
+  FATFS fs;
+  FRESULT res;
+  DIR dir;
+  FILINFO fno;
+
+  f_mount(&fs, "", 1);
+  res = f_opendir(&dir, "/");
+  if (res == FR_OK)
+  {
+    while (1)
+    {
+      res = f_readdir(&dir, &fno);
+      if (res != FR_OK || fno.fname[0] == 0)
+        break;
+      if (!(fno.fattrib & AM_DIR) && (fno.fsize != 0))
+      {
+        len = strlen(fno.fname);
+        if ((len > 4) && (fno.fname[len - 4] == '.') && (fno.fname[len - 3] == 'B') && (fno.fname[len - 2] == 'I') && (fno.fname[len - 1] == 'N'))
+        {
+          memcpy(bin_file, &fno, sizeof(FILINFO));
+          r = 1;
+          break;
+        }
+      }
+    }
+  }
+  f_closedir(&dir);
+  f_mount(NULL, "", 1);
+
+  return r;
 }
 
 /* USER CODE END 0 */
@@ -187,6 +265,7 @@ int main(void)
   MX_DMA_Init();
   MX_TIM5_Init();
   MX_TIM2_Init();
+  write_hardware_version();
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
   HAL_Delay(10);
   // If IRQ pin not grounded - start app
@@ -194,16 +273,17 @@ int main(void)
   if (HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin)) start_app();
 #endif
   // Green LED
-  set_led_color(0x00, 0xFF, 0x00);
+  led_green();
   // Need to release pin during one second
   HAL_Delay(1000);
   // If IRQ pin not released...
-  if (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin)) {
-	  // Turn off LED
-      set_led_color(0x00, 0x00, 0x00);
-      HAL_Delay(50);
-      // Start app
-	  start_app();
+  if (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin))
+  {
+    // Turn off the LED
+    led_off();
+    HAL_Delay(50);
+    // Start app
+    start_app();
   }
   /* USER CODE END SysInit */
 
@@ -216,38 +296,35 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   // Yellow LED
-  set_led_color(0xFF, 0xFF, 0x00);
-  /*
-  */
-
+  led_yellow();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	// Check if last write operation was long time ago
-    if (last_write_ts && (HAL_GetTick() - last_write_ts >= WRITE_TO_FLASH_TIME)) {
-      FATFS FatFs;
-      FRESULT fr;
-      // Mount FAT file system and check if firmware file exists
-      f_mount(&FatFs, "", 1);
-      fr = f_stat(FIRMWARE_FILE, NULL);
-      f_mount(NULL, "", 1);
-      if (fr == FR_OK) {
-    	// White LED
-        set_led_color(0xFF, 0xFF, 0xFF);
+    // Check if last write operation was long time ago
+    if (last_write_ts && (HAL_GetTick() - last_write_ts >= WRITE_TO_FLASH_TIME))
+    {
+      FILINFO fno;
+      if (find_bin_file(&fno))
+      {
+        // White LED
+        led_white();
         // Disable USB MSD
         USBD_DeInit(&hUsbDeviceFS);
         // Write firmware
-        write_firmware();
+        write_firmware(&fno);
         // Turn off the LED
-        set_led_color(0x00, 0x00, 0x00);
+        led_off();
         HAL_Delay(50);
         // Stop
         __disable_irq();
-        while (1) { }
-      } else {
+        while (1)
+        {
+        }
+      } else
+      {
         last_write_ts = 0;
       }
     }

@@ -1,5 +1,6 @@
 module FamicomDumper # (
-  parameter LEDS_TIMER_SIZE = 12
+  parameter LEDS_TIMER_SIZE = 12,
+  parameter VERSION_3 = 1
 )
 (
    input m2,
@@ -33,7 +34,7 @@ module FamicomDumper # (
 );
 
 assign romsel = !(m2 && a15 && ne1_active);
-assign cpu_rw = reg_cpu_rw || coolboy_mode;
+assign cpu_rw = reg_cpu_rw /*|| (coolboy_mode && VERSION_3)*/;
 assign cpu_oe = !cpu_shifter_enabled;
 assign cpu_dir = !reg_cpu_rw;
 assign ppu_rd = !(!ne2 && !noe);

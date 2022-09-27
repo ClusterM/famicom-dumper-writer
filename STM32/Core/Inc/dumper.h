@@ -1,9 +1,12 @@
 #ifndef _DUMPER_H_
 #define _DUMPER_H_
 
-#define PROTOCOL_VERSION 3
-#define FIRMWARE_VERSION_MAJOR 2
+#define PROTOCOL_VERSION 4
+#define FIRMWARE_VERSION_MAJOR 3
 #define FIRMWARE_VERSION_MINOR 0
+#define FIRMWARE_VERSION_SUFFIX 0
+#define HARDWARE_VERSION_ADDRESS 0x08070000 - 2048
+#define HARDWARE_VERSION ((volatile uint8_t*)(HARDWARE_VERSION_ADDRESS))
 
 #define FDS_IRQ_CONTROL 0x4022
 #define FDS_MASTER_IO 0x4023
@@ -49,8 +52,7 @@ void read_chr_crc_send(uint16_t address, uint16_t len);
 void write_chr(uint16_t address, uint16_t len, uint8_t *data);
 void erase_flash_sector();
 void write_flash(uint16_t address, uint16_t len, uint8_t *data);
-void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t* block_write_ids, uint16_t *write_lengths,
-    uint8_t *write_data);
+void fds_transfer(uint8_t block_read_start, uint8_t block_read_count, uint8_t block_write_count, uint8_t *block_write_ids, uint16_t *write_lengths, uint8_t *write_data);
 void get_mirroring();
 void set_coolboy_gpio_mode(uint8_t coolboy_gpio_mode);
 
