@@ -9,6 +9,21 @@
 
 static int svf_setup(struct libxsvf_host *h)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* Configure GPIO pin : TDO_Pin */
+  GPIO_InitStruct.Pin = TDO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(TDO_GPIO_Port, &GPIO_InitStruct);
+
+  /* Configure GPIO pins : TCK_Pin TDI_Pin TMS_Pin */
+  GPIO_InitStruct.Pin = TCK_Pin|TDI_Pin|TMS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   HAL_GPIO_WritePin(TCK_GPIO_Port, TCK_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TDI_GPIO_Port, TDI_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(TMS_GPIO_Port, TMS_Pin, GPIO_PIN_SET);
@@ -18,6 +33,14 @@ static int svf_setup(struct libxsvf_host *h)
 
 static int svf_shutdown(struct libxsvf_host *h)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /* Configure GPIO pin : TDO_Pin TCK_Pin TDI_Pin TMS_Pin */
+  GPIO_InitStruct.Pin = TDO_Pin|TCK_Pin|TDI_Pin|TMS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   return 0;
 }
 

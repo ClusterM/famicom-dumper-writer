@@ -69,16 +69,20 @@ void error(void);
 #define M2_GPIO_Port GPIOA
 #define WS2812_Pin GPIO_PIN_2
 #define WS2812_GPIO_Port GPIOA
-#define NOE_Pin GPIO_PIN_4
-#define NOE_GPIO_Port GPIOD
-#define NWE_Pin GPIO_PIN_5
-#define NWE_GPIO_Port GPIOD
-#define NE1_Pin GPIO_PIN_7
-#define NE1_GPIO_Port GPIOD
-#define NE2_Pin GPIO_PIN_9
-#define NE2_GPIO_Port GPIOG
+#define FSMC_NOE_Pin GPIO_PIN_4
+#define FSMC_NOE_GPIO_Port GPIOD
+#define FSMC_NWE_Pin GPIO_PIN_5
+#define FSMC_NWE_GPIO_Port GPIOD
+#define FSMC_NWAIT_Pin GPIO_PIN_6
+#define FSMC_NWAIT_GPIO_Port GPIOD
+#define FSMC_NE1_Pin GPIO_PIN_7
+#define FSMC_NE1_GPIO_Port GPIOD
+#define FSMC_NE2_Pin GPIO_PIN_9
+#define FSMC_NE2_GPIO_Port GPIOG
 #define IRQ_Pin GPIO_PIN_7
 #define IRQ_GPIO_Port GPIOB
+#define SHIFTERS_OE_Pin GPIO_PIN_0
+#define SHIFTERS_OE_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
 /* USER CODE END Private defines */
 

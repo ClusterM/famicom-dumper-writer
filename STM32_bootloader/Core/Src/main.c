@@ -187,7 +187,7 @@ int main(void)
         // Write firmware
         write_cpld(&fno);
         // Turn off the LED
-        led_yellow();
+        led_green();
         HAL_Delay(50);
         // Stop
       }
@@ -200,7 +200,7 @@ int main(void)
         // Write firmware
         write_firmware(&fno);
         // Turn off the LED
-        led_off();
+        led_green();
         HAL_Delay(50);
         // Stop
         __disable_irq();
@@ -451,27 +451,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, TCK_Pin|TDI_Pin|TMS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOD, FSMC_NOE_Pin|FSMC_NWE_Pin|FSMC_NWAIT_Pin|FSMC_NE1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, NOE_Pin|NWE_Pin|NE1_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(FSMC_NE2_GPIO_Port, FSMC_NE2_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(NE2_GPIO_Port, NE2_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SHIFTERS_OE_GPIO_Port, SHIFTERS_OE_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : TDO_Pin */
-  GPIO_InitStruct.Pin = TDO_Pin;
+  /*Configure GPIO pins : TDO_Pin TCK_Pin TDI_Pin TMS_Pin */
+  GPIO_InitStruct.Pin = TDO_Pin|TCK_Pin|TDI_Pin|TMS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TDO_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : TCK_Pin TDI_Pin TMS_Pin */
-  GPIO_InitStruct.Pin = TCK_Pin|TDI_Pin|TMS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
@@ -480,25 +474,32 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : NOE_Pin NWE_Pin NE1_Pin */
-  GPIO_InitStruct.Pin = NOE_Pin|NWE_Pin|NE1_Pin;
+  /*Configure GPIO pins : FSMC_NOE_Pin FSMC_NWE_Pin FSMC_NWAIT_Pin FSMC_NE1_Pin */
+  GPIO_InitStruct.Pin = FSMC_NOE_Pin|FSMC_NWE_Pin|FSMC_NWAIT_Pin|FSMC_NE1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : NE2_Pin */
-  GPIO_InitStruct.Pin = NE2_Pin;
+  /*Configure GPIO pin : FSMC_NE2_Pin */
+  GPIO_InitStruct.Pin = FSMC_NE2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(NE2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(FSMC_NE2_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : IRQ_Pin */
   GPIO_InitStruct.Pin = IRQ_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(IRQ_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SHIFTERS_OE_Pin */
+  GPIO_InitStruct.Pin = SHIFTERS_OE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(SHIFTERS_OE_GPIO_Port, &GPIO_InitStruct);
 
 }
 
