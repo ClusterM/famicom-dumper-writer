@@ -60,6 +60,14 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define TDO_Pin GPIO_PIN_0
+#define TDO_GPIO_Port GPIOC
+#define TCK_Pin GPIO_PIN_1
+#define TCK_GPIO_Port GPIOC
+#define TDI_Pin GPIO_PIN_2
+#define TDI_GPIO_Port GPIOC
+#define TMS_Pin GPIO_PIN_3
+#define TMS_GPIO_Port GPIOC
 #define M2_Pin GPIO_PIN_0
 #define M2_GPIO_Port GPIOA
 #define COOLBOY_MODE_Pin GPIO_PIN_1

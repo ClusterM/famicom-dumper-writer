@@ -26,7 +26,10 @@
 /* USER CODE BEGIN Includes */
 #include "bootloader.h"
 #include "usbd_core.h"
+#include "firmwriter.h"
+#include "cpldwriter.h"
 #include "led.h"
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +47,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
- TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim5;
 DMA_HandleTypeDef hdma_tim5_ch3_up;
 
@@ -59,6 +63,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM5_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -81,7 +86,7 @@ static void start_app(void)
   {}
 }
 
-static void error(void)
+void error(void)
 {
   // Dispose resources, show red LED and stop
   f_mount(NULL, "", 1);
@@ -92,147 +97,6 @@ static void error(void)
   while (1)
   {
   }
-}
-
-static void write_hardware_version(void)
-{
-  uint32_t value;
-  uint32_t current_value;
-  HAL_StatusTypeDef hres;
-  FLASH_EraseInitTypeDef erase_init_struct;
-  uint32_t sector_error = 0;
-  uint8_t HARDWARE_VERSION[] = { HARDWARE_VERSION_MAJOR & 0xFF, (HARDWARE_VERSION_MAJOR >> 8) && 0xFF, HARDWARE_VERSION_MINOR, HARDWARE_VERSION_SUFFIX };
-
-  // Write hardware version
-  value = *(uint32_t*)HARDWARE_VERSION;
-  current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
-  if (value != current_value)
-  {
-    // Flash can be locked by FATFS
-    hres = HAL_FLASH_Unlock();
-    if (hres != HAL_OK)
-      error();
-    erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
-    erase_init_struct.PageAddress = HARDWARE_VERSION_ADDRESS;
-    erase_init_struct.NbPages = 1;
-    hres = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
-    if (hres != HAL_OK)
-      error();
-    current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
-    hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, HARDWARE_VERSION_ADDRESS, value);
-    if (hres != HAL_OK)
-      error();
-    current_value = *(volatile uint32_t*)(HARDWARE_VERSION_ADDRESS);
-    if (value != current_value)
-      error();
-    HAL_FLASH_Lock();
-  }
-}
-
-static void write_firmware(FILINFO *bin_file)
-{
-  int i;
-  uint8_t buff[MSD_BLOCK_SIZE];
-  FATFS FatFs;
-  FIL fil;
-  FRESULT fr;
-  UINT br = 0;
-  uint32_t address = APP_ADDRESS;
-  FLASH_EraseInitTypeDef erase_init_struct;
-  uint32_t sector_error = 0;
-  HAL_StatusTypeDef hres;
-  uint32_t value;
-
-  // Unlock flash
-  hres = HAL_FLASH_Unlock();
-  if (hres != HAL_OK)
-    error();
-
-  // Mount FAT file system
-  fr = f_mount(&FatFs, "", 1);
-  if (fr)
-    error();
-  // Open firmware file
-  fr = f_open(&fil, bin_file->fname, FA_READ);
-  if (fr)
-    error();
-  while (1)
-  {
-    // Read data
-    fr = f_read(&fil, buff, MSD_BLOCK_SIZE, &br);
-    if (fr)
-      error();
-    // Break if end of file
-    if (!br)
-      break;
-    if ((address % MSD_BLOCK_SIZE) != 0)
-      error();
-    // Erase flash page
-    erase_init_struct.TypeErase = FLASH_TYPEERASE_PAGES;
-    erase_init_struct.PageAddress = address;
-    erase_init_struct.NbPages = 1;
-    hres = HAL_FLASHEx_Erase(&erase_init_struct, &sector_error);
-    if (hres != HAL_OK)
-      error();
-    // Write data
-    for (i = 0; i < br; i += 4)
-    {
-      value = *(volatile uint32_t*) &buff[i];
-      hres = HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, value);
-      if (hres != HAL_OK)
-        error();
-      address += 4;
-    }
-  }
-  // Close file
-  fr = f_close(&fil);
-  if (fr)
-    error();
-  // Delete file
-  fr = f_unlink(bin_file->fname);
-  // Unmount
-  fr = f_mount(NULL, "", 1);
-  if (fr)
-    error();
-
-  // Lock flash
-  HAL_FLASH_Lock();
-}
-
-int find_bin_file(FILINFO *bin_file)
-{
-  // Find first .bin file if any
-  int len, r = 0;
-  FATFS fs;
-  FRESULT res;
-  DIR dir;
-  FILINFO fno;
-
-  f_mount(&fs, "", 1);
-  res = f_opendir(&dir, "/");
-  if (res == FR_OK)
-  {
-    while (1)
-    {
-      res = f_readdir(&dir, &fno);
-      if (res != FR_OK || fno.fname[0] == 0)
-        break;
-      if (!(fno.fattrib & AM_DIR) && (fno.fsize != 0))
-      {
-        len = strlen(fno.fname);
-        if ((len > 4) && (fno.fname[len - 4] == '.') && (fno.fname[len - 3] == 'B') && (fno.fname[len - 2] == 'I') && (fno.fname[len - 1] == 'N'))
-        {
-          memcpy(bin_file, &fno, sizeof(FILINFO));
-          r = 1;
-          break;
-        }
-      }
-    }
-  }
-  f_closedir(&dir);
-  f_mount(NULL, "", 1);
-
-  return r;
 }
 
 /* USER CODE END 0 */
@@ -294,7 +158,12 @@ int main(void)
   MX_TIM5_Init();
   MX_FATFS_Init();
   MX_TIM2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  // Microsecond counter
+  HAL_TIM_Base_Start(&htim1);
+  // M2
+  HAL_TIM_Base_Start(&htim2);
   // Yellow LED
   led_yellow();
   /* USER CODE END 2 */
@@ -307,12 +176,27 @@ int main(void)
     if (last_write_ts && (HAL_GetTick() - last_write_ts >= WRITE_TO_FLASH_TIME))
     {
       FILINFO fno;
-      if (find_bin_file(&fno))
+      int usb_stopped = 0; // to prevent double deinit
+      if (find_svf_file(&fno))
       {
         // White LED
         led_white();
         // Disable USB MSD
         USBD_DeInit(&hUsbDeviceFS);
+        usb_stopped = 1;
+        // Write firmware
+        write_cpld(&fno);
+        // Turn off the LED
+        led_yellow();
+        HAL_Delay(50);
+        // Stop
+      }
+      if (find_bin_file(&fno))
+      {
+        // White LED
+        led_white();
+        // Disable USB MSD
+        if (!usb_stopped) USBD_DeInit(&hUsbDeviceFS);
         // Write firmware
         write_firmware(&fno);
         // Turn off the LED
@@ -323,10 +207,9 @@ int main(void)
         while (1)
         {
         }
-      } else
-      {
-        last_write_ts = 0;
       }
+
+      last_write_ts = 0;
     }
     HAL_Delay(100);
     /* USER CODE END WHILE */
@@ -381,6 +264,52 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   HAL_RCC_MCOConfig(RCC_MCO, RCC_MCO1SOURCE_PLLCLK, RCC_MCODIV_1);
+}
+
+/**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 71;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
 }
 
 /**
@@ -517,16 +446,33 @@ static void MX_GPIO_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, TCK_Pin|TDI_Pin|TMS_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, NOE_Pin|NWE_Pin|NE1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(NE2_GPIO_Port, NE2_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : TDO_Pin */
+  GPIO_InitStruct.Pin = TDO_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(TDO_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TCK_Pin TDI_Pin TMS_Pin */
+  GPIO_InitStruct.Pin = TCK_Pin|TDI_Pin|TMS_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
