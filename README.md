@@ -39,24 +39,31 @@ Bill of Materials:
 You need to write firmware to two chips: the STM32F103ZET microcontroller and the EPM3064 CPLD. But actually you need only to flash bootloader to STM32 using ST-Link programmer. Using bootloader you can flash both firmwares: to the STM32F103ZET and to the EPM3064.
 
 How to use bootloader:
-* Disconnect device from USB
-* Short the ground and the IRQ pins using tweezers or scissors
+* Disconnect device from USB.
+* Short the ground and the IRQ pins using tweezers or scissors.
 ![image](https://user-images.githubusercontent.com/4236181/199541345-306caee4-c31a-42c1-a359-deda248acd2a.png)
-* Connect the device to the USB of your PC/Mac, the RGB LED should turn green, try again if it's not green
-* Remove tweezers/scissors quickly while the LED is green
-* The LED should turn yellow, try again if it's not yellow
-* The device should be detected as USB drive
-* Format it to FAT32 if it's not formatted yet (you need to do it only once)
-* Write SVF file with firmware for EPM3064 and BIN file with firmware for STM32F103ZET to this drive, you can write both at the same time
-* The RGB LED should turn white
-* Wait for some time (~30 seconds for EPM3064 firmware, ~1 second for STM32F103ZET firmware)
-* The RGB LED should turn green if success, red on some error
-* Reconnect device to your PC/Mac
+* Connect the device to the USB of your PC/Mac. The RGB LED should turn green. Try again if it's not green.
+* Remove tweezers/scissors quickly while the LED is green.
+* The LED should turn yellow. Try again if it's not yellow.
+* The device should be detected as USB drive/
+* Format it to FAT32 if it's not formatted yet. You need to do it only once.
+* Write SVF file with the firmware for the EPM3064 chip and BIN file with the firmware for the STM32F103ZET chip to this USB drive. You can write both at the same time.
+* The RGB LED should turn white.
+* Wait for some time: ~30 seconds for EPM3064 firmware, ~1 second for STM32F103ZET firmware.
+* The RGB LED should turn green on success, red on some error.
+* Reconnect device to your PC/Mac.
+
+You can update the firmwares using the same way without any additional hardware (only tweezers or scissors :))
 
 ## Driver
 
-Under Windows the driver is usually installed automatically. 
+This device shound work without any additional drivers on all modern operating systems, as virtual serial port.
 
 ## Software
 
 [https://github.com/ClusterM/famicom-dumper-client](https://github.com/ClusterM/famicom-dumper-client)
+
+## Donate
+https://www.donationalerts.com/r/clustermeerkat
+
+https://boosty.to/cluster
