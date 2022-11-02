@@ -3,11 +3,15 @@
 
 ## Overview
 
-This is a simple dumper/writer for Famicom cartridges and Famicom Disc System cards. This version is much faster compared to the [old one](https://github.com/ClusterM/famicom-dumper). It's using a very accurate M2 cycle simulation and FSMC (Flexible Static Memory Controller) to access PRG and CHR memory. FSMC is precisely synchronized with the M2 clock signal using a CPLD chip. The new version is also using a fast on-chip USB controller instead of a slow FT232 USB-UART converter.
+This is a advanced dumper/writer for Famicom/NES cartridges and Famicom Disc System cards. The goal of the project is to create an ideal famicom data bus simulator. It's using a very accurate M2 cycle simulation and FSMC (Flexible Static Memory Controller) to access PRG and CHR memory. FSMC is precisely synchronized with the M2 clock signal using a CPLD chip. Also, this device is very fast.
 
-![Dumper](photos/dumper.jpg)
+![Photo](https://user-images.githubusercontent.com/4236181/199539054-2da17ed3-e98a-4038-84b8-aacf2e7f1236.jpg)
 
-![Dumper](photos/dumper2.jpg)
+![Photo](https://user-images.githubusercontent.com/4236181/199539726-d5e7b510-6abe-4d8f-b085-fa2728207396.jpg)
+
+![Photo](https://user-images.githubusercontent.com/4236181/199539827-68e36781-ad6b-4e45-9271-9100852039d1.jpg)
+
+![Photo](https://user-images.githubusercontent.com/4236181/199539772-cbb50b0d-46fc-4041-86d4-61bbee8b1c01.jpg)
 
 You can use it to:
 
@@ -32,13 +36,26 @@ Bill of Materials:
 
 ## Firmware
 
-You need to write firmware to two chips: the STM32 chip using ST-Link programmer and the EPM1270 CPLD chip using USB Blaster programmer.
+You need to write firmware to two chips: the STM32F103ZET microcontroller and the EPM3064 CPLD. But actually you need only to flash bootloader to STM32 using ST-Link programmer. Using bootloader you can flash both firmwares: to the STM32F103ZET and to the EPM3064.
 
+How to use bootloader:
+* Disconnect device from USB
+* Short the ground and the IRQ pins using tweezers or scissors
+![image](https://user-images.githubusercontent.com/4236181/199541345-306caee4-c31a-42c1-a359-deda248acd2a.png)
+* Connect the device to the USB of your PC/Mac, the RGB LED should turn green, try again if it's not green
+* Remove tweezers/scissors quickly while the LED is green
+* The LED should turn yellow, try again if it's not yellow
+* The device should be detected as USB drive
+* Format it to FAT32 if it's not formatted yet (you need to do it only once)
+* Write SVF file with firmware for EPM3064 and BIN file with firmware for STM32F103ZET to this drive, you can write both at the same time
+* The RGB LED should turn white
+* Wait for some time (~30 seconds for EPM3064 firmware, ~1 second for STM32F103ZET firmware)
+* The RGB LED should turn green if success, red on some error
+* Reconnect device to your PC/Mac
 
 ## Driver
 
-Under Windows the driver is usually installed automatically. If it doesn't, you can get the driver here: [https://www.st.com/en/development-tools/stsw-stm32102.html](https://www.st.com/en/development-tools/stsw-stm32102.html) - registration required but it's free.
-
+Under Windows the driver is usually installed automatically. 
 
 ## Software
 
