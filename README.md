@@ -1,4 +1,4 @@
-# Famicom Dumper/Writer
+# Famicom/NES Dumper/Writer
 
 
 ## Overview
