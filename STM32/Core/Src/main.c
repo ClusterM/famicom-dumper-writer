@@ -136,6 +136,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   uint16_t address;
+  uint32_t address32;
   uint16_t length;
   led_blue();
 
@@ -153,8 +154,8 @@ int main(void)
         comm_send_byte(PROTOCOL_VERSION);
         comm_send_byte(0xFF);
         comm_send_byte(0xFF); // unlimited send buffer
-        comm_send_byte((RECV_BUFFER_SIZE - 5) & 0xFF);
-        comm_send_byte(((RECV_BUFFER_SIZE - 5) >> 8) & 0xFF);
+        comm_send_byte((RECV_BUFFER_SIZE - 8) & 0xFF);
+        comm_send_byte(((RECV_BUFFER_SIZE - 8) >> 8) & 0xFF);
         comm_send_byte(FIRMWARE_VERSION_MAJOR & 0xFF);
         comm_send_byte((FIRMWARE_VERSION_MAJOR >> 8) & 0xFF);
         comm_send_byte(FIRMWARE_VERSION_MINOR);
@@ -208,6 +209,16 @@ int main(void)
         address = recv_buffer[0] | ((uint16_t) recv_buffer[1] << 8);
         length = recv_buffer[2] | ((uint16_t) recv_buffer[3] << 8);
         write_flash(address, length, (uint8_t*) &recv_buffer[4]);
+        break;
+
+      case COMMAND_UNROM512_ERASE_REQUEST:
+        erase_unrom512();
+        break;
+
+      case COMMAND_UNROM512_WRITE_REQUEST:
+        address32 = recv_buffer[0] | ((uint32_t) recv_buffer[1] << 8) | ((uint32_t) recv_buffer[2] << 16) | ((uint32_t) recv_buffer[3] << 24);
+        length = recv_buffer[4] | ((uint16_t) recv_buffer[5] << 8);
+        write_unrom512(address32, length, (uint8_t*) &recv_buffer[6]);
         break;
 
       case COMMAND_CHR_INIT:

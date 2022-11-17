@@ -39,6 +39,7 @@ void reset(void)
 void set_flash_buffer_size(uint16_t value)
 {
   // Set maximum number of bytes in multi-byte flash program
+  // 0 = disable multi-byte program
   uint8_t bit_value = 0;
   while (value > 1)
   {
@@ -128,7 +129,7 @@ void erase_flash_sector()
   PRG(0x8000 | 0x0000) = 0x30;
 
   uint32_t start_time = HAL_GetTick();
-// waiting for result
+  // waiting for result
   uint8_t ff_count = 0;
   while (1)
   {
@@ -161,11 +162,22 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
     uint16_t a = address;
     uint16_t last_address = 0;
     uint8_t last_data = 0;
-    uint16_t address_base = a & flash_buffer_mask;
-    while ((len > 0) && ((a & flash_buffer_mask) == address_base))
+    if (flash_buffer_mask != 0xFFFF)
     {
+      // multi-byte program
+      uint16_t address_base = a & flash_buffer_mask;
+      while ((len > 0) && ((a & flash_buffer_mask) == address_base))
+      {
+        if (*d != 0xFF)
+          count++;
+        a++;
+        len--;
+        d++;
+      }
+    } else {
+      // single-byte program
       if (*d != 0xFF)
-        count++;
+        count = 1;
       a++;
       len--;
       d++;
@@ -173,26 +185,40 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
 
     if (count)
     {
-      PRG(0x8000 | 0x0000) = 0xF0;
-      PRG(0x8000 | 0x0AAA) = 0xAA;
-      PRG(0x8000 | 0x0555) = 0x55;
-      PRG(0x8000 | 0x0000) = 0x25;
-      PRG(0x8000 | 0x0000) = count - 1;
-
-      while (count > 0)
+      if (count > 0)
       {
-        if (*data != 0xFF)
+        // multi-byte
+        PRG(0x8000 | 0x0000) = 0xF0;
+        PRG(0x8000 | 0x0AAA) = 0xAA;
+        PRG(0x8000 | 0x0555) = 0x55;
+        PRG(0x8000 | 0x0000) = 0x25;
+        PRG(0x8000 | 0x0000) = count - 1;
+        while (count > 0)
         {
-          PRG(0x8000 | address) = *data;
-          last_address = address;
-          last_data = *data;
-          count--;
+          if (*data != 0xFF)
+          {
+            PRG(0x8000 | address) = *data;
+            last_address = address;
+            last_data = *data;
+            count--;
+          }
+          address++;
+          data++;
         }
+        PRG(0x8000 + 0x0000) = 0x29;
+      } else {
+        // single-byte
+        PRG(0x8000 | 0x0000) = 0xF0;
+        PRG(0x8000 | 0x0AAA) = 0xAA;
+        PRG(0x8000 | 0x0555) = 0x55;
+        PRG(0x8000 | 0x0AAA) = 0xA0;
+        PRG(0x8000 | address) = *data;
+        last_address = address;
+        last_data = *data;
+        count--;
         address++;
         data++;
       }
-
-      PRG(0x8000 + 0x0000) = 0x29;
 
       uint32_t start_time = HAL_GetTick();
       // waiting for result
@@ -228,14 +254,92 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
         {
           read_1 = PRG(0x8000 | last_address);
           read_2 = PRG(0x8000 | last_address);
-          if (read_1 == read_2 && read_2 == last_data)
-            break; // OK
+          if ((read_1 == read_2) && (read_2 == last_data)) break; // OK
         }
       }
     }
 
     address = a;
     data = d;
+  }
+  comm_start(COMMAND_PRG_WRITE_DONE, 0);
+}
+
+void unrom512_cmd_write(uint32_t address, uint8_t data)
+{
+  PRG(0xC000) = address >> 14;
+  PRG(0x8000 | (address & 0x3FFF)) = data;
+}
+
+uint8_t unrom512_cmd_read(uint32_t address)
+{
+  PRG(0xC000) = address >> 14;
+  return PRG(0x8000 | (address & 0x3FFF));
+}
+
+void erase_unrom512()
+{
+  led_yellow();
+  unrom512_cmd_write(0x0000, 0xF0);
+  unrom512_cmd_write(0x5555, 0xAA);
+  unrom512_cmd_write(0x2AAA, 0x55);
+  unrom512_cmd_write(0x5555, 0x80);
+  unrom512_cmd_write(0x5555, 0xAA);
+  unrom512_cmd_write(0x2AAA, 0x55);
+  unrom512_cmd_write(0x5555, 0x10);
+
+  uint32_t start_time = HAL_GetTick();
+  // waiting for result
+  uint8_t ff_count = 0;
+  while (1)
+  {
+    if (HAL_GetTick() >= start_time + 5000) // 5 seconds timeout
+    {
+      // timeout
+      comm_start(COMMAND_FLASH_ERASE_TIMEOUT, 0);
+      break;
+    }
+    if (PRG(0x8000) != 0xFF)
+      ff_count = 0;
+    else
+      ff_count++;
+    if (ff_count >= 2)
+    {
+      // OK
+      comm_start(COMMAND_PRG_WRITE_DONE, 0);
+      break;
+    }
+  }
+}
+
+void write_unrom512(uint32_t address, uint16_t len, uint8_t *data)
+{
+  led_red();
+  PRG(0x8000 | 0x0000) = 0xF0;
+  while (len > 0)
+  {
+    unrom512_cmd_write(0x5555, 0xAA);
+    unrom512_cmd_write(0x2AAA, 0x55);
+    unrom512_cmd_write(0x5555, 0xA0);
+    unrom512_cmd_write(address, *data);
+
+    uint32_t start_time = HAL_GetTick();
+    // waiting for result
+    while (1)
+    {
+      if (HAL_GetTick() >= start_time + 50) // 50 ms timeout
+      {
+        // timeout
+        comm_start(COMMAND_FLASH_WRITE_TIMEOUT, 0);
+        return;
+      }
+      uint8_t read_1 = unrom512_cmd_read(address);
+      uint8_t read_2 = unrom512_cmd_read(address);
+      if ((read_1 == read_2) && (read_2 == *data)) break; // OK
+    }
+    address++;
+    data++;
+    len--;
   }
   comm_start(COMMAND_PRG_WRITE_DONE, 0);
 }
@@ -585,7 +689,6 @@ void get_mirroring()
   dummy = CHR((1 << 10) | (1 << 11));
   comm_send_byte(HAL_GPIO_ReadPin(CIRAM_A10_GPIO_Port, CIRAM_A10_Pin));
 }
-
 
 void set_coolboy_gpio_mode(uint8_t coolboy_gpio_mode)
 {
