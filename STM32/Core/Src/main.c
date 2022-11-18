@@ -26,6 +26,9 @@
 #include <stdio.h>
 #include "dumper.h"
 #include "comm.h"
+#include "flash.h"
+#include "unrom512.h"
+#include "fds.h"
 #include "led.h"
 /* USER CODE END Includes */
 
