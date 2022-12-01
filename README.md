@@ -26,7 +26,7 @@ You can use it to:
 * Do some reverse engineering.
 * Anything else that requires Famicom/NES bus simulation.
 
-## Schematic:
+## Schematic
 
 ![Schematic](schematic/schematic.png)
 
