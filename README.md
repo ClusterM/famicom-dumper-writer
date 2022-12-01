@@ -32,7 +32,7 @@ You can use it to:
 
 Bill of Materials:
 
-![BoM](schematic/bom.png)
+![BoM](schematic/FamicomDumper_bom.png)
 
 ## Firmware
 
