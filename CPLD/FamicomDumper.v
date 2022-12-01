@@ -43,8 +43,8 @@ assign ppu_oe = !(!ne2 && ne1);
 assign ppu_dir = !(!ne2 && !noe);
 assign na13 = !a13;
 assign nwait = !waiting;
-assign coolboy_oe = !(ne1_active && m2 && a15 && reg_cpu_rw);
-assign coolboy_we = !(ne1_active && m2 && a15 && !reg_cpu_rw);
+assign coolboy_oe = !(m2 && a15 && ne1_active && reg_cpu_rw);
+assign coolboy_we = !(m2 && a15 && ne1_active && !reg_cpu_rw);
 
 reg [2:0] stage = 0;
 reg [5:0] wait_timer = 0;
