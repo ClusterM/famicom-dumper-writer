@@ -1,6 +1,5 @@
 # Famicom/NES Dumper/Writer
 
-
 ## Overview
 
 This is a powerfull dumper/writer for Famicom/NES cartridges and Famicom Disc System cards. The goal of the project is to create an ideal famicom data bus simulator. It's using a very accurate M2 cycle simulation and FSMC (Flexible Static Memory Controller) to access PRG and CHR memory. FSMC is precisely synchronized with the M2 clock signal using a CPLD chip. Also, this device is very fast.
@@ -13,17 +12,19 @@ This is a powerfull dumper/writer for Famicom/NES cartridges and Famicom Disc Sy
 
 ![Photo](https://user-images.githubusercontent.com/4236181/199539772-cbb50b0d-46fc-4041-86d4-61bbee8b1c01.jpg)
 
+![COOLBOY writing using GPIO pins](https://user-images.githubusercontent.com/4236181/205022872-06b35562-9506-4536-8cd8-bed026156c52.jpg)
+
 You can use it to:
 
 * Dump cartridges, so you can play copy of your cartridge on emulator.
 * Read/write battery backed saves, so that you can continue your saved game on emulator/console.
-* Write special cartridges like [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard).
-* Rewrite ultracheap chinese COOLBOY cartridges. Soldering is required to work with old versions but it's very simple. New versions can be rewritten without soldering.
+* (Re)write special cartridges like [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard).
+* (Re)write ultracheap chinese COOLBOY cartridges. Soldering is required to work with old versions but it's very simple. New versions can be rewritten without soldering.
+* (Re)write UNROM-512 cartridges (Nesmaker)
 * Test your cartridges.
 * Read and write Famicom Disk System cards using FDS drive with the RAM adapter.
-* Some reverse engineering.
-* Anything else that requires Famicom bus simulation.
-
+* Do some reverse engineering.
+* Anything else that requires Famicom/NES bus simulation.
 
 ## Schematic:
 
@@ -32,7 +33,6 @@ You can use it to:
 Bill of Materials:
 
 ![BoM](schematic/bom.png)
-
 
 ## Firmware
 
