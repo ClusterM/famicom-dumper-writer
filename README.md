@@ -17,12 +17,15 @@ This is a powerfull dumper/writer for Famicom/NES cartridges and Famicom Disc Sy
 You can use it to:
 
 * Dump cartridges, so you can play copy of your cartridge on emulator.
-* Read/write battery backed saves, so that you can continue your saved game on emulator/console.
-* (Re)write special cartridges like [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard).
-* (Re)write ultracheap chinese COOLBOY cartridges. Soldering is required to work with old versions but it's very simple. New versions can be rewritten without soldering.
-* (Re)write UNROM-512 cartridges (Nesmaker)
-* Test your cartridges.
+* Dump reset-based cartridges, there is command to simulate reset press.
+* Dump cartridges that requires a continuous clock on M2 pin.
+* Use it with [very flexible and multiplatform client](https://github.com/ClusterM/famicom-dumper-client), it's using C# scripts.
+* Read/write battery backed saves, so that you can continue your saved game on emulator/console and vice-versa.
+* (Re)write [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard) cartridges.
+* (Re)write ultracheap chinese [COOLBOY (AA6023 chip based)](https://www.nesdev.org/wiki/NES_2.0_Mapper_268) cartridges (mapper 268). Soldering is required for a cheap cartridges but it's very simple. Some more expensive cartridges can be rewritten without soldering.
+* (Re)write UNROM-512 cartridges (RetroUSB, mapper 30).
 * Read and write Famicom Disk System cards using FDS drive with the RAM adapter.
+* Test your cartridges.
 * Do some reverse engineering.
 * Anything else that requires Famicom/NES bus simulation.
 
