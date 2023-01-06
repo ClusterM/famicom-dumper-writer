@@ -48,7 +48,7 @@ How to use bootloader:
 * Connect the device to the USB of your PC/Mac. The RGB LED should turn green. Try again if it's not green.
 * Remove tweezers/scissors quickly while the LED is green.
 * The LED should turn yellow. Try again if it's not yellow.
-* The device should be detected as USB drive/
+* The device should be detected as USB drive.
 * Format it to FAT32 if it's not formatted yet. You need to do it only once.
 * Write SVF file with the firmware for the EPM3064 chip and BIN file with the firmware for the STM32F103ZET chip to this USB drive. You can write both at the same time.
 * The RGB LED should turn white.
