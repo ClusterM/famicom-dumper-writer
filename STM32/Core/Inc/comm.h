@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#define RECV_BUFFER_SIZE 1024 * 54
+#define RECV_BUFFER_SIZE 1024 * 50
 #define SEND_BUFFER_SIZE 64
 #define SEND_TIMEOUT 1000
 

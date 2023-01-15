@@ -45,12 +45,14 @@ static void comm_send_and_calc(uint8_t data)
 static uint8_t check_send_buffer()
 {
   uint8_t ok = 1;
+  if (send_buffer_pos >= sizeof(send_buffer))
+  {
+    ok &= comm_flush();
+    if (!ok) return ok;
+  }
   if (comm_send_pos >= comm_send_length)
   {
     send_buffer[send_buffer_pos++] = comm_send_crc;
-    ok &= comm_flush();
-  } else if (send_buffer_pos >= sizeof(send_buffer))
-  {
     ok &= comm_flush();
   }
   return ok;

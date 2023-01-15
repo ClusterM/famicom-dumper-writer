@@ -79,7 +79,6 @@ static void MX_TIM4_Init(void);
 /* USER CODE BEGIN 0 */
 int _write(int file, char *ptr, int len)
 {
-  /* Implement your write code here, this is used by puts and printf for example */
   for (int i = 0; i < len; i++)
     ITM_SendChar((*ptr++));
   return len;
