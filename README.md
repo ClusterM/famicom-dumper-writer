@@ -17,22 +17,25 @@ This is a powerfull dumper/writer for Famicom/NES cartridges and Famicom Disc Sy
 You can use it to:
 
 * Dump cartridges, so you can play copy of your cartridge on emulator.
-* Read/write battery backed saves, so that you can continue your saved game on emulator/console.
-* (Re)write special cartridges like [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard).
-* (Re)write ultracheap chinese COOLBOY cartridges. Soldering is required to work with old versions but it's very simple. New versions can be rewritten without soldering.
-* (Re)write UNROM-512 cartridges (Nesmaker)
-* Test your cartridges.
+* Dump reset-based cartridges, there is command to simulate reset press.
+* Dump cartridges that requires a continuous clock on M2 pin.
+* Use it with [very flexible and multiplatform client](https://github.com/ClusterM/famicom-dumper-client), it's using C# scripts.
+* Read/write battery backed saves, so that you can continue your saved game on emulator/console and vice-versa.
+* (Re)write [COOLGIRL](https://github.com/ClusterM/coolgirl-famicom-multicard) cartridges.
+* (Re)write ultracheap chinese [COOLBOY (AA6023 chip based)](https://www.nesdev.org/wiki/NES_2.0_Mapper_268) cartridges (mapper 268). Soldering is required for a cheap cartridges but it's very simple. Some more expensive cartridges can be rewritten without soldering.
+* (Re)write UNROM-512 cartridges (RetroUSB, mapper 30).
 * Read and write Famicom Disk System cards using FDS drive with the RAM adapter.
+* Test your cartridges.
 * Do some reverse engineering.
 * Anything else that requires Famicom/NES bus simulation.
 
-## Schematic:
+## Schematic
 
 ![Schematic](schematic/schematic.png)
 
 Bill of Materials:
 
-![BoM](schematic/bom.png)
+![BoM](schematic/FamicomDumper_bom.png)
 
 ## Firmware
 
@@ -45,7 +48,7 @@ How to use bootloader:
 * Connect the device to the USB of your PC/Mac. The RGB LED should turn green. Try again if it's not green.
 * Remove tweezers/scissors quickly while the LED is green.
 * The LED should turn yellow. Try again if it's not yellow.
-* The device should be detected as USB drive/
+* The device should be detected as USB drive.
 * Format it to FAT32 if it's not formatted yet. You need to do it only once.
 * Write SVF file with the firmware for the EPM3064 chip and BIN file with the firmware for the STM32F103ZET chip to this USB drive. You can write both at the same time.
 * The RGB LED should turn white.
