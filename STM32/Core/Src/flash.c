@@ -86,7 +86,7 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
 
     if (count)
     {
-      if (count > 0)
+      if (count > 1)
       {
         // multi-byte
         PRG(0x8000 | 0x0000) = 0xF0;
@@ -98,7 +98,6 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
         {
           if (*data != 0xFF)
           {
-            PRG(0x8000 | address) = *data;
             last_address = address;
             last_data = *data;
             count--;
@@ -134,29 +133,7 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
         uint8_t read_1 = PRG(0x8000 | last_address);
         uint8_t read_2 = PRG(0x8000 | last_address);
         uint8_t read_3 = PRG(0x8000 | last_address);
-        if (((read_1 ^ read_2) & (1 << 6)) && ((read_2 ^ read_3) & (1 << 6)))
-        {
-          if (read_1 & (1 << 1))
-          {
-            comm_start(COMMAND_FLASH_WRITE_ERROR, 3);
-            comm_send_byte(read_1);
-            comm_send_byte(read_2);
-            comm_send_byte(read_3);
-            return;
-          } else if (read_1 & (1 << 5))
-          {
-            comm_start(COMMAND_FLASH_WRITE_TIMEOUT, 3);
-            comm_send_byte(read_1);
-            comm_send_byte(read_2);
-            comm_send_byte(read_3);
-            return;
-          }
-        } else
-        {
-          read_1 = PRG(0x8000 | last_address);
-          read_2 = PRG(0x8000 | last_address);
-          if ((read_1 == read_2) && (read_2 == last_data)) break; // OK
-        }
+        if ((read_1 == read_2) && (read_2 == read_3) && (read_3 == last_data)) break; // OK
       }
     }
 
