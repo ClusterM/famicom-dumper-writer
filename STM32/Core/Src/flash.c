@@ -56,6 +56,7 @@ void erase_flash_sector()
 void write_flash(uint16_t address, uint16_t len, uint8_t *data)
 {
   led_red();
+  PRG(0x8000 | 0x0000) = 0xF0; // reset flash
   while (len > 0)
   {
     uint16_t count = 0;
@@ -89,15 +90,15 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
       if (count > 1)
       {
         // multi-byte
-        PRG(0x8000 | 0x0000) = 0xF0;
         PRG(0x8000 | 0x0AAA) = 0xAA;
         PRG(0x8000 | 0x0555) = 0x55;
         PRG(0x8000 | 0x0000) = 0x25;
         PRG(0x8000 | 0x0000) = count - 1;
-        while (count > 0)
+        while (count)
         {
           if (*data != 0xFF)
           {
+            PRG(0x8000 | address) = *data;
             last_address = address;
             last_data = *data;
             count--;
@@ -108,16 +109,21 @@ void write_flash(uint16_t address, uint16_t len, uint8_t *data)
         PRG(0x8000 + 0x0000) = 0x29;
       } else {
         // single-byte
-        PRG(0x8000 | 0x0000) = 0xF0;
-        PRG(0x8000 | 0x0AAA) = 0xAA;
-        PRG(0x8000 | 0x0555) = 0x55;
-        PRG(0x8000 | 0x0AAA) = 0xA0;
-        PRG(0x8000 | address) = *data;
-        last_address = address;
-        last_data = *data;
-        count--;
-        address++;
-        data++;
+        while (count)
+        {
+          if (*data != 0xFF)
+          {
+            PRG(0x8000 | 0x0AAA) = 0xAA;
+            PRG(0x8000 | 0x0555) = 0x55;
+            PRG(0x8000 | 0x0AAA) = 0xA0;
+            PRG(0x8000 | address) = *data;
+            last_address = address;
+            last_data = *data;
+            count--;
+          }
+          address++;
+          data++;
+        }
       }
 
       uint32_t start_time = HAL_GetTick();
