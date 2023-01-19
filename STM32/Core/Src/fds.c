@@ -20,8 +20,6 @@ static int8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of_
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
-      //comm_start(COMMAND_FDS_TIMEOUT, 0);
       return -COMMAND_FDS_TIMEOUT;
     }
   }
@@ -40,8 +38,6 @@ static int8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of_
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
     {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
-      //comm_start(COMMAND_FDS_TIMEOUT, 0);
       return -COMMAND_FDS_TIMEOUT;
     }
   }
@@ -77,10 +73,13 @@ static int8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file_
     // handle errors
     if (r <= 0)
     {
+      if (!r) return r;
       // send empty rest of the packet
       // before sending error code
       if (send)
-        for (;b < length + 2; b++) comm_send_byte(0);
+        for (;b < length + 2; b++)
+          if (!comm_send_byte(0))
+            return 0;
       return r;
     }
     // parse file size if need
@@ -118,13 +117,12 @@ static int8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file_
   end_of_head |= (disk_status >> 6) & 1;
   if (send)
   {
-    if (!comm_send_byte(crc_ok)) // CRC check result
-      return 0;
-    if (!comm_send_byte(end_of_head)) // end of head meet?
-      return 0;
+    if (!comm_send_byte(crc_ok)) return 0; // CRC result
+    if (!comm_send_byte(end_of_head)) return 0; // end of head meet?
   }
-  if (!crc_ok || end_of_head)
-    return 0;
+  if (send && (!crc_ok || end_of_head)) return -COMMAND_FDS_READ_RESULT_END;
+  if (!crc_ok) return -COMMAND_FDS_BLOCK_CRC_ERROR;
+  if (end_of_head) return -COMMAND_FDS_END_OF_HEAD;
 
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON; // motor on without transfer
 
@@ -230,8 +228,8 @@ static int8_t fds_transfer_real(uint8_t block_read_start, uint8_t block_read_cou
   PRG(FDS_EXT_WRITE) = 0xFF;
   HAL_Delay(100);
   if (!(PRG(FDS_EXT_READ) & 0x80))
-    // battery low
     return -COMMAND_FDS_BATTERY_LOW;
+
   // waiting until drive is rewinded
   start_time = HAL_GetTick();
   do
