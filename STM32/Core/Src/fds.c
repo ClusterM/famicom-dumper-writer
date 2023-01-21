@@ -19,9 +19,7 @@ static int8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of_
     // waiting for interrupt
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
-    {
       return -COMMAND_FDS_TIMEOUT;
-    }
   }
   if (output)
     *output = PRG(FDS_DATA_READ);
@@ -37,9 +35,7 @@ static int8_t transfer_fds_byte(uint8_t *output, uint8_t input, uint8_t *end_of_
     // is interrupt flag cleared?
     // timeout 5 secs
     if (HAL_GetTick() - start_time >= 5000)
-    {
       return -COMMAND_FDS_TIMEOUT;
-    }
   }
   return 1;
 }
@@ -93,23 +89,28 @@ static int8_t read_fds_block_send(uint16_t length, uint8_t send, uint16_t *file_
     // send data over USB if need
     if (send)
     {
-      if (!comm_send_byte(data))
-        return 0;
+      if (!comm_send_byte(data)) return 0;
     }
   }
   r = transfer_fds_byte(0, 0, &end_of_head);
   if (r <= 0)
   {
-    if (!comm_send_byte(0)) return 0;
-    if (!comm_send_byte(0)) return 0;
+    if (send)
+    {
+      if (!comm_send_byte(0)) return 0;
+      if (!comm_send_byte(0)) return 0;
+    }
     return r;
   }
   PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
   r = transfer_fds_byte(0, 0, &end_of_head);
   if (r <= 0)
   {
-    if (!comm_send_byte(0)) return 0;
-    if (!comm_send_byte(0)) return 0;
+    if (send)
+    {
+      if (!comm_send_byte(0)) return 0;
+      if (!comm_send_byte(0)) return 0;
+    }
     return r;
   }
   disk_status = PRG(FDS_DISK_STATUS);
@@ -152,13 +153,9 @@ static int8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_delay
   if (r <= 0) return r;
   while (length)
   {
-    if (end_of_head)
-    {
-      PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
-      return - COMMAND_FDS_END_OF_HEAD;
-    }
+    if (end_of_head) return -COMMAND_FDS_END_OF_HEAD;
     r = transfer_fds_byte(0, *data, &end_of_head);
-    return r;
+    if (r <= 0) return r;
     data++;
     length--;
     pos++;
@@ -171,11 +168,7 @@ static int8_t write_fds_block(uint8_t *data, uint16_t length, uint32_t gap_delay
   }
   r = transfer_fds_byte(0, 0xFF, &end_of_head);
   if (r <= 0) return r;
-  if (end_of_head)
-  {
-    PRG(FDS_CONTROL) = FDS_CONTROL_READ | FDS_CONTROL_MOTOR_OFF; // reset, stop
-    return -COMMAND_FDS_END_OF_HEAD;
-  }
+  if (end_of_head) return -COMMAND_FDS_END_OF_HEAD;
   PRG(FDS_CONTROL) = FDS_CONTROL_WRITE | FDS_CONTROL_MOTOR_ON | FDS_CONTROL_TRANSFER_ON | FDS_CONTROL_IRQ_ON | FDS_CONTROL_CRC; // enable CRC control
   delay_clock(FDS_WRITE_CRC_DELAY);
   start_time = HAL_GetTick();
