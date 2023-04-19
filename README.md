@@ -67,6 +67,8 @@ This device shound work without any additional drivers on all modern operating s
 [https://github.com/ClusterM/famicom-dumper-client](https://github.com/ClusterM/famicom-dumper-client)
 
 ## Donate
+PayPal: cluster@cluster.wtf
+
 https://www.donationalerts.com/r/clustermeerkat
 
 https://boosty.to/cluster
