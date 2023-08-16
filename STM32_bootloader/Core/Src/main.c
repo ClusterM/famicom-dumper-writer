@@ -138,8 +138,8 @@ int main(void)
 #endif
   // Green LED
   led_green();
-  // Need to release pin during one second
-  HAL_Delay(1000);
+  // Need to release pin during 1/2 second
+  HAL_Delay(500);
   // If IRQ pin not released...
   if (!HAL_GPIO_ReadPin(IRQ_GPIO_Port, IRQ_Pin))
   {
