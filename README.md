@@ -4,15 +4,15 @@
 
 This is a powerfull dumper/writer for Famicom/NES cartridges and Famicom Disc System cards. The goal of the project is to create an ideal famicom data bus simulator. It's using a very accurate M2 cycle simulation and FSMC (Flexible Static Memory Controller) to access PRG and CHR memory. FSMC is precisely synchronized with the M2 clock signal using a CPLD chip. Also, this device is very fast.
 
-![Photo](https://user-images.githubusercontent.com/4236181/199539054-2da17ed3-e98a-4038-84b8-aacf2e7f1236.jpg)
+![Photo](https://user-images.githubusercontent.com/4236181/235350119-793815aa-95da-4c7b-bf84-db3447c28d03.png)
 
-![Photo](https://user-images.githubusercontent.com/4236181/199539726-d5e7b510-6abe-4d8f-b085-fa2728207396.jpg)
+![Photo](https://user-images.githubusercontent.com/4236181/235350135-da4f3216-9eb6-4f03-9bbc-cc38e23ae000.png)
 
-![Photo](https://user-images.githubusercontent.com/4236181/199539827-68e36781-ad6b-4e45-9271-9100852039d1.jpg)
+![COOLBOY writing using GPIO pins](https://user-images.githubusercontent.com/4236181/235350469-b145a435-11e1-4bd7-b127-99530b134add.jpg)
 
-![Photo](https://user-images.githubusercontent.com/4236181/199539772-cbb50b0d-46fc-4041-86d4-61bbee8b1c01.jpg)
+Video about dumper development (English subtitles):
 
-![COOLBOY writing using GPIO pins](https://user-images.githubusercontent.com/4236181/205022872-06b35562-9506-4536-8cd8-bed026156c52.jpg)
+[![Video preview](https://user-images.githubusercontent.com/4236181/235350428-5f049562-cb3c-4a93-aa31-fd1779f9ccad.jpg)](https://youtu.be/j_rteVX5q-g)
 
 You can use it to:
 
@@ -67,6 +67,8 @@ This device shound work without any additional drivers on all modern operating s
 [https://github.com/ClusterM/famicom-dumper-client](https://github.com/ClusterM/famicom-dumper-client)
 
 ## Donate
+PayPal: cluster@cluster.wtf
+
 https://www.donationalerts.com/r/clustermeerkat
 
 https://boosty.to/cluster
