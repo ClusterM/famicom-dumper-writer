@@ -73,3 +73,5 @@ set_location_assignment PIN_18 -to led_prg_write
 set_location_assignment PIN_15 -to led_chr_read
 set_location_assignment PIN_14 -to led_chr_write
 set_location_assignment PIN_31 -to coolboy_mode
+set_global_assignment -name USE_CONFIGURATION_DEVICE ON
+set_global_assignment -name GENERATE_SVF_FILE ON
